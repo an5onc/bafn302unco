@@ -1,0 +1,285 @@
+/* ===== HP 10bII Calculator Widget ===== */
+
+.calc-widget {
+  max-width: 400px;
+  margin: 0 auto;
+  background: linear-gradient(145deg, #3a3a3a, #252525);
+  border-radius: 20px;
+  padding: 1.5rem 1.25rem 1.25rem;
+  box-shadow:
+    0 12px 40px rgba(0,0,0,0.25),
+    0 4px 12px rgba(0,0,0,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  user-select: none;
+}
+
+/* ===== Brand label ===== */
+.calc-brand {
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+.calc-brand-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #999;
+}
+.calc-brand-model {
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #666;
+  margin-top: 1px;
+}
+
+/* ===== LCD Display ===== */
+.calc-display {
+  background: linear-gradient(180deg, #b8c8a0, #c8d8b0);
+  border-radius: 10px;
+  padding: 0.6rem 0.85rem 0.5rem;
+  margin-bottom: 1rem;
+  border: 2px solid #555;
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,0.15),
+    0 1px 0 rgba(255,255,255,0.05);
+}
+
+.calc-annunciators {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: transparent;
+  min-height: 0.85rem;
+}
+.calc-annunciators span {
+  color: transparent;
+  transition: color 0.15s;
+}
+.calc-annunciators span.active {
+  color: #3a4a30;
+}
+
+.calc-lcd {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 2.1rem;
+  font-weight: 700;
+  text-align: right;
+  color: #1a2a10;
+  min-height: 2.6rem;
+  line-height: 2.6rem;
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.calc-registers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.6rem;
+  font-size: 0.6rem;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 600;
+  color: #5a6a50;
+  margin-top: 0.4rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid #a0b090;
+}
+.calc-registers span {
+  transition: color 0.2s, transform 0.2s;
+}
+.calc-registers span.just-set {
+  color: #1a2a10;
+}
+.calc-registers span.just-solved {
+  color: #1a5a10;
+  font-weight: 700;
+}
+
+/* ===== Keypad Grid ===== */
+.calc-keypad {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.calc-row {
+  display: grid;
+  gap: 5px;
+}
+.calc-row.tvm-row {
+  grid-template-columns: repeat(5, 1fr);
+}
+.calc-row.util-row {
+  grid-template-columns: repeat(5, 1fr);
+}
+.calc-row.num-row {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* ===== Key Base ===== */
+.calc-key {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.2rem 0.45rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.06s, box-shadow 0.06s;
+  min-height: 46px;
+  -webkit-tap-highlight-color: transparent;
+}
+.calc-key:active {
+  transform: translateY(1.5px);
+}
+
+/* ===== Key Variants ===== */
+
+/* TVM keys - dark charcoal, visually prominent */
+.calc-key.tvm {
+  background: linear-gradient(180deg, #555, #3a3a3a);
+  color: #fff;
+  font-weight: 700;
+  box-shadow:
+    0 3px 6px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+}
+.calc-key.tvm:active {
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* Number keys - white/cream */
+.calc-key.num {
+  background: linear-gradient(180deg, #f7f7f5, #e8e6e0);
+  color: #1a1a1a;
+  font-weight: 600;
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+}
+.calc-key.num:active {
+  background: linear-gradient(180deg, #e8e6e0, #ddd);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Operator keys - slightly darker cream */
+.calc-key.op {
+  background: linear-gradient(180deg, #eae8e2, #d8d5ce);
+  color: #1a1a1a;
+  font-weight: 700;
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.calc-key.op:active {
+  background: linear-gradient(180deg, #d8d5ce, #ccc);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Orange SHIFT key */
+.calc-key.shift {
+  background: linear-gradient(180deg, #fb923c, #ea580c);
+  color: #fff;
+  font-weight: 700;
+  box-shadow:
+    0 3px 6px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.calc-key.shift:active {
+  background: linear-gradient(180deg, #ea580c, #c2410c);
+}
+.calc-key.shift.active {
+  box-shadow:
+    0 0 12px rgba(249, 115, 22, 0.5),
+    0 3px 6px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+/* Clear key - red tint */
+.calc-key.clear {
+  background: linear-gradient(180deg, #eae8e2, #d8d5ce);
+  color: #1a1a1a;
+  font-weight: 600;
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.calc-key.clear:active {
+  background: linear-gradient(180deg, #d8d5ce, #ccc);
+}
+
+/* Utility keys - same as operator */
+.calc-key.util {
+  background: linear-gradient(180deg, #eae8e2, #d8d5ce);
+  color: #1a1a1a;
+  font-weight: 600;
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.calc-key.util:active {
+  background: linear-gradient(180deg, #d8d5ce, #ccc);
+}
+
+/* ===== Key Labels ===== */
+.key-label {
+  font-size: 0.8rem;
+  line-height: 1;
+}
+.key-shift-label {
+  font-size: 0.5rem;
+  font-weight: 600;
+  color: #f97316;
+  line-height: 1;
+  min-height: 0.65rem;
+  letter-spacing: 0.02em;
+}
+/* On TVM keys, shift label sits above */
+.calc-key.tvm .key-shift-label {
+  color: #fb923c;
+}
+
+/* ===== Focused/highlight states ===== */
+.calc-key:focus-visible {
+  outline: 2px solid #fb923c;
+  outline-offset: 2px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 420px) {
+  .calc-widget {
+    max-width: 100%;
+    border-radius: 14px;
+    padding: 1rem 0.75rem;
+  }
+  .calc-lcd {
+    font-size: 1.7rem;
+    min-height: 2.2rem;
+    line-height: 2.2rem;
+  }
+  .calc-key {
+    padding: 0.45rem 0.15rem 0.35rem;
+    min-height: 40px;
+    border-radius: 5px;
+  }
+  .key-label {
+    font-size: 0.7rem;
+  }
+  .key-shift-label {
+    font-size: 0.45rem;
+  }
+}
+
+/* ===== Hidden utility ===== */
+.hidden {
+  display: none !important;
+}

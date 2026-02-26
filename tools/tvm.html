@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>TVM Solver - Finance Toolkit</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/calculator.css">
 </head>
 <body>
   <header class="site-header">
@@ -20,8 +21,17 @@
       <button class="btn-sm" id="btn-reset">Reset</button>
     </div>
 
-    <!-- Inputs -->
-    <div class="card">
+    <!-- Mode toggle -->
+    <div class="mode-switch" id="view-mode-switch" style="margin-bottom:1rem">
+      <button class="active" data-view="normal">Normal Mode</button>
+      <button data-view="calculator">Calculator Mode</button>
+    </div>
+
+    <!-- Calculator mount (hidden by default) -->
+    <div id="calculator-mount" class="hidden" style="margin-bottom:1rem"></div>
+
+    <!-- Inputs (Normal Mode) -->
+    <div class="card" id="normal-mode-card">
       <div class="card-title">What you know (leave one blank to solve)</div>
       <div class="input-grid">
         <div class="field">
@@ -107,6 +117,7 @@
 
   <script src="/js/finance.js"></script>
   <script src="/js/components.js"></script>
+  <script src="/js/calculator.js"></script>
   <script>
     const FIELDS = ['n', 'iyr', 'pv', 'pmt', 'fv'];
     const ADV_FIELDS = ['pyr', 'mode'];
@@ -275,6 +286,62 @@
       document.getElementById('mode').value = 'end';
     });
 
+    // ===== Calculator Mode Toggle =====
+    let viewMode = 'normal';
+    let calcInstance = null;
+
+    document.getElementById('view-mode-switch').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      viewMode = btn.dataset.view;
+      document.querySelectorAll('#view-mode-switch button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      if (viewMode === 'calculator') {
+        document.getElementById('normal-mode-card').classList.add('hidden');
+        document.getElementById('calculator-mount').classList.remove('hidden');
+        // Hide the normal-mode solve button context
+        document.getElementById('btn-example').style.display = 'none';
+
+        if (!calcInstance) {
+          calcInstance = new HP10bII({
+            container: document.getElementById('calculator-mount'),
+            onSolve: function(regs, solvedVar) {
+              // Map calculator register names to form field IDs
+              var regToField = { N: 'n', IYR: 'iyr', PV: 'pv', PMT: 'pmt', FV: 'fv' };
+
+              // Populate all fields EXCEPT the solved variable (leave it blank so solve() detects it)
+              Object.keys(regToField).forEach(function(reg) {
+                var fieldId = regToField[reg];
+                if (reg === solvedVar) {
+                  UI.setVal(fieldId, '');
+                } else if (regs[reg] !== null) {
+                  UI.setVal(fieldId, regs[reg]);
+                }
+              });
+
+              // Set advanced options
+              document.getElementById('pyr').value = String(regs.pyr || 1);
+              document.getElementById('mode').value = regs.isBegin ? 'begin' : 'end';
+
+              // Trigger the existing solve() which sees 1 blank field
+              solve();
+            }
+          });
+        }
+      } else {
+        document.getElementById('normal-mode-card').classList.remove('hidden');
+        document.getElementById('calculator-mount').classList.add('hidden');
+        document.getElementById('btn-example').style.display = '';
+      }
+    });
+
+    // ===== Reset also resets calculator =====
+    var origResetHandler = document.getElementById('btn-reset').onclick;
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      if (calcInstance) calcInstance.clearAll();
+    });
+
     // Load from URL params
     document.addEventListener('DOMContentLoaded', () => {
       const params = UI.getParams();
@@ -282,6 +349,11 @@
         UI.loadParams(FIELDS);
         if (params.pyr) document.getElementById('pyr').value = params.pyr;
         if (params.mode) document.getElementById('mode').value = params.mode;
+      }
+      // If URL has view=calculator, switch to calculator mode
+      if (params.view === 'calculator') {
+        var calcBtn = document.querySelector('#view-mode-switch button[data-view="calculator"]');
+        if (calcBtn) calcBtn.click();
       }
     });
   </script>
