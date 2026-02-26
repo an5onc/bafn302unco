@@ -1,308 +1,220 @@
-/* ===== HP 10bII Calculator Widget ===== */
+/* ===== HP 10bII+ Calculator Widget — Faithful Layout ===== */
 
 .calc-widget {
-  max-width: 400px;
+  max-width: 380px;
   margin: 0 auto;
-  background: linear-gradient(145deg, #3a3a3a, #252525);
-  border-radius: 20px;
-  padding: 1.5rem 1.25rem 1.25rem;
+  background: linear-gradient(160deg, #2a2a2a, #1a1a1a);
+  border-radius: 18px;
+  padding: 1.25rem 1rem 1.1rem;
   box-shadow:
-    0 12px 40px rgba(0,0,0,0.25),
-    0 4px 12px rgba(0,0,0,0.15),
+    0 16px 48px rgba(0,0,0,0.35),
+    0 4px 12px rgba(0,0,0,0.2),
     inset 0 1px 0 rgba(255,255,255,0.06);
   user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* ===== Brand label ===== */
-.calc-brand {
-  text-align: center;
-  margin-bottom: 0.75rem;
-}
+/* ===== Brand ===== */
+.calc-brand { text-align: left; margin-bottom: 0.5rem; padding: 0 0.15rem; }
 .calc-brand-name {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #999;
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: #888;
 }
 .calc-brand-model {
-  font-size: 0.55rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: #666;
-  margin-top: 1px;
+  font-size: 0.5rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #555; margin-top: 1px;
 }
 
-/* ===== LCD Display ===== */
+/* ===== Display ===== */
 .calc-display {
-  background: linear-gradient(180deg, #b8c8a0, #c8d8b0);
-  border-radius: 10px;
-  padding: 0.6rem 0.85rem 0.5rem;
-  margin-bottom: 1rem;
-  border: 2px solid #555;
-  box-shadow:
-    inset 0 2px 6px rgba(0,0,0,0.15),
-    0 1px 0 rgba(255,255,255,0.05);
+  background: linear-gradient(180deg, #b6c8a2, #c4d4ae);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem 0.45rem;
+  margin-bottom: 0.9rem;
+  border: 2px solid #444;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.04);
 }
 
 .calc-annunciators {
-  display: flex;
-  gap: 0.75rem;
-  font-size: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: transparent;
-  min-height: 0.85rem;
+  display: flex; gap: 0.6rem;
+  font-size: 0.52rem; font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase; min-height: 0.75rem;
 }
-.calc-annunciators span {
-  color: transparent;
-  transition: color 0.15s;
-}
-.calc-annunciators span.active {
-  color: #3a4a30;
-}
+.calc-annunciators .ann { color: transparent; transition: color 0.12s; }
+.calc-annunciators .ann.active { color: #2a3a1e; }
 
 .calc-lcd {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 2.1rem;
-  font-weight: 700;
-  text-align: right;
-  color: #1a2a10;
-  min-height: 2.6rem;
-  line-height: 2.6rem;
-  letter-spacing: 0.04em;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  font-size: 2rem; font-weight: 700;
+  text-align: right; color: #1a2a10;
+  min-height: 2.4rem; line-height: 2.4rem;
+  letter-spacing: 0.03em;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
 
 .calc-registers {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.15rem 0.6rem;
-  font-size: 0.6rem;
-  font-family: 'Courier New', Courier, monospace;
-  font-weight: 600;
-  color: #5a6a50;
-  margin-top: 0.4rem;
-  padding-top: 0.35rem;
-  border-top: 1px solid #a0b090;
+  display: flex; flex-wrap: wrap; gap: 0.1rem 0.5rem;
+  font-size: 0.52rem; font-family: 'Courier New', Courier, monospace;
+  font-weight: 600; color: #4a5a3a;
+  margin-top: 0.3rem; padding-top: 0.3rem;
+  border-top: 1px solid #98a88a;
 }
-.calc-registers span {
-  transition: color 0.2s, transform 0.2s;
-}
-.calc-registers span.just-set {
-  color: #1a2a10;
-}
-.calc-registers span.just-solved {
-  color: #1a5a10;
-  font-weight: 700;
-}
+.calc-registers span { transition: color 0.2s; }
+.calc-registers span.just-set    { color: #1a2a10; }
+.calc-registers span.just-solved { color: #0a5a10; font-weight: 700; }
 
-/* ===== Keypad Grid ===== */
-.calc-keypad {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
+/* ===== Keypad ===== */
+.calc-keypad { display: flex; flex-direction: column; gap: 4px; }
 
 .calc-row {
-  display: grid;
-  gap: 5px;
+  display: grid; gap: 4px;
 }
-.calc-row.tvm-row {
+/* 5-key rows */
+.calc-row.tvm-row,
+.calc-row.fin-row,
+.calc-row.cf-row,
+.calc-row.mem-row {
   grid-template-columns: repeat(5, 1fr);
 }
-.calc-row.sci-row {
-  grid-template-columns: repeat(5, 1fr);
-}
-.calc-row.util-row {
-  grid-template-columns: repeat(5, 1fr);
-}
+/* Number rows: shift-key (slightly narrower) + 4 equal keys */
 .calc-row.num-row {
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 0.7fr repeat(4, 1fr);
 }
-.calc-row.num-row-5 {
-  grid-template-columns: repeat(5, 1fr);
+/* Last row: ON (narrower like shift) + 4 keys */
+.calc-row.num-row-bottom {
+  grid-template-columns: 0.7fr repeat(4, 1fr);
 }
 
 /* ===== Key Base ===== */
 .calc-key {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 0.55rem 0.2rem 0.45rem;
-  border: none;
-  border-radius: 6px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-end;
+  padding: 0.3rem 0.15rem 0.3rem;
+  border: none; border-radius: 5px;
   cursor: pointer;
-  transition: transform 0.06s, box-shadow 0.06s;
-  min-height: 46px;
+  transition: transform 0.06s, filter 0.06s;
+  min-height: 40px;
   -webkit-tap-highlight-color: transparent;
+  gap: 1px;
 }
-.calc-key:active {
-  transform: translateY(1.5px);
-}
-
-/* ===== Key Variants ===== */
-
-/* TVM keys - dark charcoal, visually prominent */
-.calc-key.tvm {
-  background: linear-gradient(180deg, #555, #3a3a3a);
-  color: #fff;
-  font-weight: 700;
-  box-shadow:
-    0 3px 6px rgba(0,0,0,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.12);
-}
-.calc-key.tvm:active {
-  box-shadow:
-    0 1px 2px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.06);
-}
-
-/* Number keys - white/cream */
-.calc-key.num {
-  background: linear-gradient(180deg, #f7f7f5, #e8e6e0);
-  color: #1a1a1a;
-  font-weight: 600;
-  box-shadow:
-    0 2px 4px rgba(0,0,0,0.2),
-    inset 0 1px 0 rgba(255,255,255,0.8);
-}
-.calc-key.num:active {
-  background: linear-gradient(180deg, #e8e6e0, #ddd);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
-
-/* Operator keys - slightly darker cream */
-.calc-key.op {
-  background: linear-gradient(180deg, #eae8e2, #d8d5ce);
-  color: #1a1a1a;
-  font-weight: 700;
-  box-shadow:
-    0 2px 4px rgba(0,0,0,0.2),
-    inset 0 1px 0 rgba(255,255,255,0.6);
-}
-.calc-key.op:active {
-  background: linear-gradient(180deg, #d8d5ce, #ccc);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
-
-/* Orange SHIFT key */
-.calc-key.shift {
-  background: linear-gradient(180deg, #fb923c, #ea580c);
-  color: #fff;
-  font-weight: 700;
-  box-shadow:
-    0 3px 6px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.2);
-}
-.calc-key.shift:active {
-  background: linear-gradient(180deg, #ea580c, #c2410c);
-}
-.calc-key.shift.active {
-  box-shadow:
-    0 0 12px rgba(249, 115, 22, 0.5),
-    0 3px 6px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.2);
-}
-
-/* Clear key - red tint */
-.calc-key.clear {
-  background: linear-gradient(180deg, #eae8e2, #d8d5ce);
-  color: #1a1a1a;
-  font-weight: 600;
-  box-shadow:
-    0 2px 4px rgba(0,0,0,0.2),
-    inset 0 1px 0 rgba(255,255,255,0.6);
-}
-.calc-key.clear:active {
-  background: linear-gradient(180deg, #d8d5ce, #ccc);
-}
-
-/* Scientific keys - blue tint to distinguish from util */
-.calc-key.sci {
-  background: linear-gradient(180deg, #3b82f6, #1d4ed8);
-  color: #fff;
-  font-weight: 600;
-  box-shadow:
-    0 2px 5px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.15);
-}
-.calc-key.sci:active {
-  background: linear-gradient(180deg, #1d4ed8, #1e40af);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.25);
-}
-.calc-key.sci .key-shift-label {
-  color: #bfdbfe;
-}
-
-/* Utility keys - same as operator */
-.calc-key.util {
-  background: linear-gradient(180deg, #eae8e2, #d8d5ce);
-  color: #1a1a1a;
-  font-weight: 600;
-  box-shadow:
-    0 2px 4px rgba(0,0,0,0.2),
-    inset 0 1px 0 rgba(255,255,255,0.6);
-}
-.calc-key.util:active {
-  background: linear-gradient(180deg, #d8d5ce, #ccc);
-}
+.calc-key:active { transform: translateY(1px); filter: brightness(0.85); }
+.calc-key:focus-visible { outline: 2px solid #f97316; outline-offset: 2px; }
 
 /* ===== Key Labels ===== */
+.key-top-label {
+  font-size: 0.42rem; font-weight: 600; letter-spacing: 0.03em;
+  line-height: 1; min-height: 0.6rem;
+  color: transparent; /* placeholder for blue labels */
+}
+.key-top-label.blue-top {
+  color: #60a5fa; /* blue-400 */
+}
+.key-shift-label {   /* orange shift label above main */
+  font-size: 0.44rem; font-weight: 700; letter-spacing: 0.02em;
+  line-height: 1; min-height: 0.6rem;
+}
+.orange-label { color: #f97316; }
+
 .key-label {
-  font-size: 0.8rem;
-  line-height: 1;
+  font-size: 0.78rem; line-height: 1; font-weight: 700;
 }
-.key-shift-label {
-  font-size: 0.5rem;
-  font-weight: 600;
-  color: #f97316;
-  line-height: 1;
-  min-height: 0.65rem;
-  letter-spacing: 0.02em;
-}
-/* On TVM keys, shift label sits above */
-.calc-key.tvm .key-shift-label {
-  color: #fb923c;
+.key-blue-label {
+  font-size: 0.38rem; font-weight: 600; letter-spacing: 0.02em;
+  line-height: 1; min-height: 0.5rem; color: #93c5fd; /* blue-300 */
 }
 
-/* ===== Focused/highlight states ===== */
-.calc-key:focus-visible {
-  outline: 2px solid #fb923c;
-  outline-offset: 2px;
+/* ===== TVM keys — silver-gray, prominent ===== */
+.calc-key.tvm {
+  background: linear-gradient(180deg, #5a5a5a, #3d3d3d);
+  color: #fff;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+.calc-key.tvm .key-label { font-size: 0.82rem; }
+
+/* ===== Financial keys — same dark gray ===== */
+.calc-key.fin {
+  background: linear-gradient(180deg, #4a4a4a, #323232);
+  color: #ccc;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.calc-key.fin .key-label { font-size: 0.68rem; }
+
+/* ===== Number keys — white/cream ===== */
+.calc-key.num {
+  background: linear-gradient(180deg, #f2f0ea, #e2dfda);
+  color: #1a1a1a;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+.calc-key.num .key-label { font-size: 0.88rem; }
+.calc-key.num .key-shift-label { font-size: 0.44rem; }
+.calc-key.num .key-blue-label  { color: #2563eb; }
+
+/* ===== Operator keys — slightly darker cream ===== */
+.calc-key.op {
+  background: linear-gradient(180deg, #e5e2db, #d2cfc8);
+  color: #1a1a1a;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.calc-key.op .key-label { font-size: 0.88rem; }
+
+/* ===== Equals key — slightly larger feel ===== */
+.calc-key.op-eq {
+  background: linear-gradient(180deg, #e5e2db, #d2cfc8);
+  color: #1a1a1a;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.calc-key.op-eq .key-label { font-size: 0.92rem; font-weight: 800; }
+
+/* ===== Clear key ===== */
+.calc-key.clear {
+  background: linear-gradient(180deg, #4a4a4a, #323232);
+  color: #ccc;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.calc-key.clear .key-label { font-size: 0.88rem; font-weight: 800; }
+
+/* ===== ON key — same as clear ===== */
+.calc-key.on {
+  background: linear-gradient(180deg, #4a4a4a, #323232);
+  color: #aaa;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+  font-size: 0.6rem;
+}
+.calc-key.on .key-label { font-size: 0.62rem; }
+
+/* ===== Shift keys ===== */
+.calc-key.shift-blue {
+  background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+  color: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+  border-radius: 6px;
+}
+.calc-key.shift-blue .key-label { font-size: 1rem; }
+.calc-key.shift-blue.active {
+  box-shadow: 0 0 10px rgba(59,130,246,0.6), 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.calc-key.shift-orange {
+  background: linear-gradient(180deg, #f97316, #c2410c);
+  color: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+  border-radius: 6px;
+}
+.calc-key.shift-orange .key-label { font-size: 1rem; }
+.calc-key.shift-orange.active {
+  box-shadow: 0 0 10px rgba(249,115,22,0.6), 0 2px 5px rgba(0,0,0,0.3);
 }
 
 /* ===== Responsive ===== */
 @media (max-width: 420px) {
-  .calc-widget {
-    max-width: 100%;
-    border-radius: 14px;
-    padding: 1rem 0.75rem;
-  }
-  .calc-lcd {
-    font-size: 1.7rem;
-    min-height: 2.2rem;
-    line-height: 2.2rem;
-  }
-  .calc-key {
-    padding: 0.45rem 0.15rem 0.35rem;
-    min-height: 40px;
-    border-radius: 5px;
-  }
-  .key-label {
-    font-size: 0.7rem;
-  }
-  .key-shift-label {
-    font-size: 0.45rem;
-  }
+  .calc-widget { max-width: 100%; border-radius: 14px; padding: 1rem 0.7rem; }
+  .calc-lcd { font-size: 1.65rem; min-height: 2rem; line-height: 2rem; }
+  .calc-key { min-height: 34px; padding: 0.2rem 0.1rem 0.22rem; }
+  .calc-key.tvm .key-label { font-size: 0.72rem; }
+  .calc-key.num .key-label { font-size: 0.78rem; }
+  .key-shift-label { font-size: 0.38rem; }
 }
 
-/* ===== Hidden utility ===== */
-.hidden {
-  display: none !important;
-}
+/* ===== Hidden ===== */
+.hidden { display: none !important; }
