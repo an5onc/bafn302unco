@@ -3,30 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Finance Toolkit</title>
+  <title>Finance Toolkit — BAFN 302</title>
+  <meta name="description" content="Financial calculators for BAFN 302 Business Finance. TVM, NPV, IRR, bond pricing, and more — built around the HP 10bII+.">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <header class="site-header">
-    <div class="logo"><span>Finance</span> Toolkit</div>
+    <div class="logo">
+      <span class="logo-icon">$</span>
+      <span class="logo-text"><em>Finance</em> Toolkit</span>
+      <span class="course-badge">BAFN 302</span>
+    </div>
     <div class="search-box">
       <span class="search-icon">&#128269;</span>
-      <input type="text" id="search" placeholder="Search tools..." autocomplete="off">
+      <input type="text" id="search" placeholder="Search tools…" autocomplete="off">
     </div>
   </header>
 
-  <main class="container" id="dashboard"></main>
+  <main class="container" id="dashboard-root">
+
+    <!-- Hero — only shown when not filtering -->
+    <div class="dashboard-hero" id="hero">
+      <div class="hero-eyebrow">University of Northern Colorado · Business Finance</div>
+      <div class="hero-title">Your <em>BAFN 302</em> Calculator Toolkit</div>
+      <div class="hero-sub">Every formula you need for exams — built to match the HP&nbsp;10bII+ you use in class. Practice here, ace the test there.</div>
+      <div class="hero-pills">
+        <span class="hero-pill">📐 Time Value of Money</span>
+        <span class="hero-pill">💸 Cash Flows &amp; IRR</span>
+        <span class="hero-pill">📊 Bond Pricing</span>
+        <span class="hero-pill">🔄 Rate Conversions</span>
+        <span class="hero-pill">🖩 HP 10bII+ Mode</span>
+      </div>
+    </div>
+
+    <!-- Tool grid (rendered by JS) -->
+    <div id="dashboard"></div>
+
+  </main>
 
   <footer class="site-footer">
-    <p>For educational use only. Not financial advice. <a href="#sign-conventions" id="sign-link">Sign convention guide</a></p>
+    <p>For educational use only · Not financial advice · Built for BAFN 302 @ UNC</p>
   </footer>
 
   <script src="/js/registry.js"></script>
   <script>
+    // Category metadata: icon, CSS class for color
+    const CAT_META = {
+      'Time Value of Money': { icon: '📐', cls: 'cat-tvm' },
+      'Cash Flows':          { icon: '💸', cls: 'cat-cf'  },
+      'Rates':               { icon: '🔄', cls: 'cat-rates'},
+      'Bonds':               { icon: '📊', cls: 'cat-bonds'},
+    };
+
     function renderDashboard(filter) {
       const container = document.getElementById('dashboard');
-      // Clear
+      const hero = document.getElementById('hero');
       while (container.firstChild) container.removeChild(container.firstChild);
+
+      // Hide hero when filtering
+      hero.style.display = filter ? 'none' : '';
 
       // Group by category
       const categories = {};
@@ -42,40 +77,58 @@
       if (Object.keys(categories).length === 0) {
         const p = document.createElement('p');
         p.textContent = 'No tools match your search.';
-        p.style.cssText = 'text-align:center;color:var(--text-muted);margin-top:3rem';
+        p.style.cssText = 'text-align:center;color:var(--text-muted);margin-top:3rem;font-size:.9rem';
         container.appendChild(p);
         return;
       }
 
       Object.entries(categories).forEach(([cat, tools]) => {
+        const meta = CAT_META[cat] || { icon: '🔢', cls: '' };
+
         const section = document.createElement('section');
-        section.className = 'category-section';
+        section.className = 'category-section ' + meta.cls;
+
+        // Section header with icon
+        const header = document.createElement('div');
+        header.className = 'section-header';
+
+        const icon = document.createElement('div');
+        icon.className = 'section-icon';
+        icon.textContent = meta.icon;
 
         const h2 = document.createElement('h2');
         h2.textContent = cat;
-        section.appendChild(h2);
+
+        header.appendChild(icon);
+        header.appendChild(h2);
+        section.appendChild(header);
 
         const grid = document.createElement('div');
         grid.className = 'tool-grid';
 
         tools.forEach(tool => {
           const card = document.createElement('div');
-          card.className = 'tool-card';
+          card.className = 'tool-card ' + meta.cls;
           card.addEventListener('click', () => { window.location.href = tool.path; });
+
+          const iconEl = document.createElement('div');
+          iconEl.className = 'tool-card-icon';
+          iconEl.textContent = meta.icon;
 
           const h3 = document.createElement('h3');
           h3.textContent = tool.title;
-          card.appendChild(h3);
 
           const p = document.createElement('p');
           p.textContent = tool.description;
-          card.appendChild(p);
 
           const btn = document.createElement('button');
           btn.className = 'open-btn';
-          btn.textContent = 'Open';
-          card.appendChild(btn);
+          btn.textContent = 'Open Tool →';
 
+          card.appendChild(iconEl);
+          card.appendChild(h3);
+          card.appendChild(p);
+          card.appendChild(btn);
           grid.appendChild(card);
         });
 
@@ -87,7 +140,7 @@
     renderDashboard();
 
     document.getElementById('search').addEventListener('input', function () {
-      renderDashboard(this.value);
+      renderDashboard(this.value.trim());
     });
   </script>
 </body>
