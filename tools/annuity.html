@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Annuity PV/FV - Finance Toolkit</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/calculator.css">
 </head>
 <body>
   <header class="site-header">
@@ -19,7 +20,14 @@
       <button class="btn-sm" id="btn-reset">Reset</button>
     </div>
 
-    <div class="card">
+    <!-- Mode toggle -->
+    <div class="mode-switch" id="view-mode-switch" style="margin-bottom:1rem">
+      <button class="active" data-view="normal">Normal Mode</button>
+      <button data-view="calculator">Calculator Mode</button>
+    </div>
+    <div id="calculator-mount" class="hidden" style="margin-bottom:1rem"></div>
+
+    <div class="card" id="normal-mode-card">
       <div class="card-title">What you know</div>
 
       <div class="mode-switch" id="mode-switch">
@@ -83,6 +91,7 @@
 
   <script src="/js/finance.js"></script>
   <script src="/js/components.js"></script>
+  <script src="/js/calculator.js"></script>
   <script>
     let calcMode = 'pv';
     let timing = 'end';
@@ -220,12 +229,70 @@
       document.getElementById('pyr').value = '12';
     });
 
+    // ===== Calculator Mode Toggle =====
+    let calcInstance = null;
+    document.getElementById('view-mode-switch').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const viewMode = btn.dataset.view;
+      document.querySelectorAll('#view-mode-switch button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (viewMode === 'calculator') {
+        document.getElementById('normal-mode-card').classList.add('hidden');
+        document.getElementById('calculator-mount').classList.remove('hidden');
+        document.getElementById('btn-example').style.display = 'none';
+        if (!calcInstance) {
+          calcInstance = new HP10bII({
+            container: document.getElementById('calculator-mount'),
+            onSolve: function(regs, solvedVar) {
+              // Annuity: N = years × pyr, I/YR = rate, PMT = pmt, PV or FV = result
+              var pyr = parseInt(UI.getSel('pyr'));
+              if (regs.N !== null) UI.setVal('years', regs.N / pyr);
+              if (regs.IYR !== null) UI.setVal('rate', regs.IYR);
+              if (regs.PMT !== null) UI.setVal('pmt', regs.PMT);
+              if (regs.isBegin) {
+                timing = 'begin';
+                document.querySelectorAll('#timing-switch button').forEach(b => b.classList.remove('active'));
+                document.querySelector('#timing-switch button[data-timing="begin"]').classList.add('active');
+              } else {
+                timing = 'end';
+                document.querySelectorAll('#timing-switch button').forEach(b => b.classList.remove('active'));
+                document.querySelector('#timing-switch button[data-timing="end"]').classList.add('active');
+              }
+              if (solvedVar === 'PV') {
+                calcMode = 'pv';
+                document.querySelectorAll('#mode-switch button').forEach(b => b.classList.remove('active'));
+                document.querySelector('#mode-switch button[data-mode="pv"]').classList.add('active');
+              } else if (solvedVar === 'FV') {
+                calcMode = 'fv';
+                document.querySelectorAll('#mode-switch button').forEach(b => b.classList.remove('active'));
+                document.querySelector('#mode-switch button[data-mode="fv"]').classList.add('active');
+              }
+              if (regs.pyr && regs.pyr > 1) document.getElementById('pyr').value = String(regs.pyr);
+              solve();
+            }
+          });
+        }
+      } else {
+        document.getElementById('normal-mode-card').classList.remove('hidden');
+        document.getElementById('calculator-mount').classList.add('hidden');
+        document.getElementById('btn-example').style.display = '';
+      }
+    });
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      if (calcInstance) calcInstance.clearAll();
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
       const params = UI.getParams();
       if (params.mode === 'fv') document.querySelector('#mode-switch button[data-mode="fv"]').click();
       if (params.timing === 'begin') document.querySelector('#timing-switch button[data-timing="begin"]').click();
       UI.loadParams(['pmt', 'rate', 'years']);
       if (params.pyr) document.getElementById('pyr').value = params.pyr;
+      if (params.view === 'calculator') {
+        var calcBtn = document.querySelector('#view-mode-switch button[data-view="calculator"]');
+        if (calcBtn) calcBtn.click();
+      }
     });
   </script>
 </body>

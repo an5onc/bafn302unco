@@ -124,11 +124,12 @@ class HP10bII {
       { key: 'minus', label: '\u2212', cls: 'op' },
     ]));
 
-    // Row 6: 0 . +/- +
-    keypad.appendChild(this._buildRow('num-row', [
+    // Row 6: 0 . +/- = +
+    keypad.appendChild(this._buildRow('num-row num-row-5', [
       { key: 'digit_0', label: '0', cls: 'num' },
       { key: 'decimal', label: '.', cls: 'num' },
       { key: 'plus_minus', label: '+/\u2212', cls: 'op' },
+      { key: 'equals', label: '=', cls: 'op' },
       { key: 'plus', label: '+', cls: 'op' },
     ]));
 
@@ -210,6 +211,9 @@ class HP10bII {
         this.pressKey('divide');
       } else if (key === 'Escape') {
         this.pressKey('c');
+      } else if (key === 'Enter' || key === '=') {
+        e.preventDefault();
+        this.pressKey('equals');
       } else if (key === 'Backspace') {
         this.handleBackspace();
       } else {
@@ -265,6 +269,10 @@ class HP10bII {
     // Arithmetic operators
     else if (['plus', 'minus', 'multiply', 'divide'].includes(keyId)) {
       this._handleOperator(keyId);
+    }
+    // Equals
+    else if (keyId === 'equals') {
+      this._handleEquals();
     }
     // Percent
     else if (keyId === 'percent') {
@@ -507,6 +515,18 @@ class HP10bII {
     this.display = this._formatNum(result);
     this.inputBuffer = '';
     this.isInputting = false;
+  }
+
+  _handleEquals() {
+    if (this.pendingOp && this.pendingOperand !== null) {
+      const result = this._evalOp(this.pendingOperand, this._getCurrentValue(), this.pendingOp);
+      this.display = this._formatNum(result);
+      this.inputBuffer = '';
+      this.isInputting = false;
+      this.pendingOp = null;
+      this.pendingOperand = null;
+      this.justComputed = true;
+    }
   }
 
   _evalOp(a, b, op) {

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Bond YTM - Finance Toolkit</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/calculator.css">
 </head>
 <body>
   <header class="site-header">
@@ -19,7 +20,14 @@
       <button class="btn-sm" id="btn-reset">Reset</button>
     </div>
 
-    <div class="card">
+    <!-- Mode toggle -->
+    <div class="mode-switch" id="view-mode-switch" style="margin-bottom:1rem">
+      <button class="active" data-view="normal">Normal Mode</button>
+      <button data-view="calculator">Calculator Mode</button>
+    </div>
+    <div id="calculator-mount" class="hidden" style="margin-bottom:1rem"></div>
+
+    <div class="card" id="normal-mode-card">
       <div class="card-title">Bond details</div>
       <div class="input-grid">
         <div class="field">
@@ -70,6 +78,7 @@
 
   <script src="/js/finance.js"></script>
   <script src="/js/components.js"></script>
+  <script src="/js/calculator.js"></script>
   <script>
     function solve() {
       const warn = document.getElementById('warnings');
@@ -174,10 +183,54 @@
       document.getElementById('freq').value = '2';
     });
 
+    // ===== Calculator Mode Toggle =====
+    let calcInstance = null;
+    document.getElementById('view-mode-switch').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const viewMode = btn.dataset.view;
+      document.querySelectorAll('#view-mode-switch button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (viewMode === 'calculator') {
+        document.getElementById('normal-mode-card').classList.add('hidden');
+        document.getElementById('calculator-mount').classList.remove('hidden');
+        document.getElementById('btn-example').style.display = 'none';
+        if (!calcInstance) {
+          calcInstance = new HP10bII({
+            container: document.getElementById('calculator-mount'),
+            onSolve: function(regs, solvedVar) {
+              // Bond YTM: N=years*freq, I/YR=YTM (solved), PV=-price, PMT=coupon/period, FV=face
+              var freq = parseInt(UI.getSel('freq'));
+              var face = UI.getNum('face') || 1000;
+              if (regs.N !== null) UI.setVal('years', regs.N / freq);
+              if (regs.PV !== null) UI.setVal('price', Math.abs(regs.PV));
+              if (regs.FV !== null) UI.setVal('face', Math.abs(regs.FV));
+              if (regs.PMT !== null) {
+                var couponRate = (Math.abs(regs.PMT) * freq / face) * 100;
+                UI.setVal('coupon', couponRate);
+              }
+              solve();
+            }
+          });
+        }
+      } else {
+        document.getElementById('normal-mode-card').classList.remove('hidden');
+        document.getElementById('calculator-mount').classList.add('hidden');
+        document.getElementById('btn-example').style.display = '';
+      }
+    });
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      if (calcInstance) calcInstance.clearAll();
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
       UI.loadParams(['price', 'face', 'coupon', 'years']);
       const params = UI.getParams();
       if (params.freq) document.getElementById('freq').value = params.freq;
+      if (params.view === 'calculator') {
+        var calcBtn = document.querySelector('#view-mode-switch button[data-view="calculator"]');
+        if (calcBtn) calcBtn.click();
+      }
     });
   </script>
 </body>

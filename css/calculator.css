@@ -120,6 +120,9 @@
 .calc-row.num-row {
   grid-template-columns: repeat(4, 1fr);
 }
+.calc-row.num-row-5 {
+  grid-template-columns: repeat(5, 1fr);
+}
 
 /* ===== Key Base ===== */
 .calc-key {

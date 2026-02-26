@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Lump Sum PV/FV - Finance Toolkit</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/calculator.css">
 </head>
 <body>
   <header class="site-header">
@@ -19,7 +20,14 @@
       <button class="btn-sm" id="btn-reset">Reset</button>
     </div>
 
-    <div class="card">
+    <!-- Mode toggle -->
+    <div class="mode-switch" id="view-mode-switch" style="margin-bottom:1rem">
+      <button class="active" data-view="normal">Normal Mode</button>
+      <button data-view="calculator">Calculator Mode</button>
+    </div>
+    <div id="calculator-mount" class="hidden" style="margin-bottom:1rem"></div>
+
+    <div class="card" id="normal-mode-card">
       <div class="card-title">What you know</div>
 
       <div class="mode-switch" id="mode-switch">
@@ -79,6 +87,7 @@
 
   <script src="/js/finance.js"></script>
   <script src="/js/components.js"></script>
+  <script src="/js/calculator.js"></script>
   <script>
     let mode = 'fv';
 
@@ -198,6 +207,60 @@
       document.getElementById('comp').value = '1';
     });
 
+    // ===== Calculator Mode Toggle =====
+    let calcInstance = null;
+    document.getElementById('view-mode-switch').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const viewMode = btn.dataset.view;
+      document.querySelectorAll('#view-mode-switch button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (viewMode === 'calculator') {
+        document.getElementById('normal-mode-card').classList.add('hidden');
+        document.getElementById('calculator-mount').classList.remove('hidden');
+        document.getElementById('btn-example').style.display = 'none';
+        if (!calcInstance) {
+          calcInstance = new HP10bII({
+            container: document.getElementById('calculator-mount'),
+            onSolve: function(regs, solvedVar) {
+              // Lump Sum is TVM with PMT=0
+              // N = years × comp, I/YR = rate, PV = pv, PMT = 0, FV = fv
+              var m = parseInt(UI.getSel('comp'));
+              if (regs.N !== null) UI.setVal('years', regs.N / m);
+              if (regs.IYR !== null) UI.setVal('rate', regs.IYR);
+              // Determine which mode based on solved variable
+              if (solvedVar === 'FV') {
+                // Computed FV → set PV and switch to FV mode
+                if (regs.PV !== null) UI.setVal('pv', regs.PV);
+                mode = 'fv';
+                document.querySelectorAll('#mode-switch button').forEach(b => b.classList.remove('active'));
+                document.querySelector('#mode-switch button[data-mode="fv"]').classList.add('active');
+                document.getElementById('field-pv').style.display = '';
+                document.getElementById('field-fv').style.display = 'none';
+              } else if (solvedVar === 'PV') {
+                // Computed PV → set FV and switch to PV mode
+                if (regs.FV !== null) UI.setVal('fv', regs.FV);
+                mode = 'pv';
+                document.querySelectorAll('#mode-switch button').forEach(b => b.classList.remove('active'));
+                document.querySelector('#mode-switch button[data-mode="pv"]').classList.add('active');
+                document.getElementById('field-pv').style.display = 'none';
+                document.getElementById('field-fv').style.display = '';
+              }
+              if (regs.pyr && regs.pyr > 1) document.getElementById('comp').value = String(regs.pyr);
+              solve();
+            }
+          });
+        }
+      } else {
+        document.getElementById('normal-mode-card').classList.remove('hidden');
+        document.getElementById('calculator-mount').classList.add('hidden');
+        document.getElementById('btn-example').style.display = '';
+      }
+    });
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      if (calcInstance) calcInstance.clearAll();
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
       const params = UI.getParams();
       if (params.mode === 'pv') {
@@ -205,6 +268,10 @@
       }
       UI.loadParams(['pv', 'fv', 'rate', 'years']);
       if (params.comp) document.getElementById('comp').value = params.comp;
+      if (params.view === 'calculator') {
+        var calcBtn = document.querySelector('#view-mode-switch button[data-view="calculator"]');
+        if (calcBtn) calcBtn.click();
+      }
     });
   </script>
 </body>

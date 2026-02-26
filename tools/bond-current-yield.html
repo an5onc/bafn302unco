@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Bond Current Yield - Finance Toolkit</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/calculator.css">
 </head>
 <body>
   <header class="site-header">
@@ -19,7 +20,14 @@
       <button class="btn-sm" id="btn-reset">Reset</button>
     </div>
 
-    <div class="card">
+    <!-- Mode toggle -->
+    <div class="mode-switch" id="view-mode-switch" style="margin-bottom:1rem">
+      <button class="active" data-view="normal">Normal Mode</button>
+      <button data-view="calculator">Calculator Mode</button>
+    </div>
+    <div id="calculator-mount" class="hidden" style="margin-bottom:1rem"></div>
+
+    <div class="card" id="normal-mode-card">
       <div class="card-title">Bond details</div>
 
       <div class="mode-switch" id="input-mode">
@@ -73,6 +81,7 @@
 
   <script src="/js/finance.js"></script>
   <script src="/js/components.js"></script>
+  <script src="/js/calculator.js"></script>
   <script>
     let inputMode = 'coupon-payment';
 
@@ -162,6 +171,28 @@
       div.appendChild(val);
       container.appendChild(div);
     }
+
+    // ===== Calculator Mode Toggle =====
+    let calcInstance = null;
+    document.getElementById('view-mode-switch').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const viewMode = btn.dataset.view;
+      document.querySelectorAll('#view-mode-switch button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (viewMode === 'calculator') {
+        document.getElementById('normal-mode-card').classList.add('hidden');
+        document.getElementById('calculator-mount').classList.remove('hidden');
+        document.getElementById('btn-example').style.display = 'none';
+        if (!calcInstance) {
+          calcInstance = new HP10bII({ container: document.getElementById('calculator-mount') });
+        }
+      } else {
+        document.getElementById('normal-mode-card').classList.remove('hidden');
+        document.getElementById('calculator-mount').classList.add('hidden');
+        document.getElementById('btn-example').style.display = '';
+      }
+    });
 
     document.getElementById('btn-solve').addEventListener('click', solve);
     document.getElementById('btn-reset').addEventListener('click', () => {
