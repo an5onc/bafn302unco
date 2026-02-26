@@ -23,6 +23,11 @@ class HP10bII {
     this.pendingOperand = null;
     this.memory = 0;
 
+    // Parentheses / expression stack
+    // Each entry: { operand, op }
+    this.parenStack = [];
+    this.parenDepth = 0;
+
     // DOM refs (populated by render)
     this.lcdEl = null;
     this.annBegin = null;
@@ -91,7 +96,16 @@ class HP10bII {
       { key: 'fv', label: 'FV', shift: '', cls: 'tvm' },
     ]));
 
-    // Row 2: Utility
+    // Row 2: Scientific keys
+    keypad.appendChild(this._buildRow('sci-row', [
+      { key: 'sqrt', label: '\u221Ax', shift: '', cls: 'sci' },
+      { key: 'yx', label: 'y\u02E3', shift: '', cls: 'sci' },
+      { key: 'recip', label: '1/x', shift: '', cls: 'sci' },
+      { key: 'ln', label: 'LN', shift: 'e\u02E3', cls: 'sci' },
+      { key: 'paren_open', label: '(', shift: ')', cls: 'sci' },
+    ]));
+
+    // Row 3: Utility
     keypad.appendChild(this._buildRow('util-row', [
       { key: 'shift', label: 'SHIFT', shift: '', cls: 'shift' },
       { key: 'sto', label: 'STO', shift: '', cls: 'util' },
@@ -216,6 +230,13 @@ class HP10bII {
         this.pressKey('equals');
       } else if (key === 'Backspace') {
         this.handleBackspace();
+      } else if (key === '(') {
+        this.pressKey('paren_open');
+      } else if (key === ')') {
+        this.shiftActive = true;
+        this.pressKey('paren_open');
+      } else if (key === '^') {
+        this.pressKey('yx');
       } else {
         handled = false;
       }
@@ -277,6 +298,36 @@ class HP10bII {
     // Percent
     else if (keyId === 'percent') {
       this._handlePercent();
+    }
+    // Scientific keys
+    else if (keyId === 'sqrt') {
+      this._handleUnary(v => v < 0 ? NaN : Math.sqrt(v));
+    }
+    else if (keyId === 'yx') {
+      // Store base, wait for exponent entry, then ^ on next =
+      this.pendingOperand = this._getCurrentValue();
+      this.pendingOp = '^';
+      this.inputBuffer = '';
+      this.isInputting = false;
+      this.justComputed = false;
+    }
+    else if (keyId === 'recip') {
+      this._handleUnary(v => v === 0 ? NaN : 1 / v);
+    }
+    else if (keyId === 'ln') {
+      if (this.shiftActive) {
+        // eˣ
+        this._handleUnary(v => Math.exp(v));
+      } else {
+        this._handleUnary(v => v <= 0 ? NaN : Math.log(v));
+      }
+    }
+    else if (keyId === 'paren_open') {
+      if (this.shiftActive) {
+        this._handleParenClose();
+      } else {
+        this._handleParenOpen();
+      }
     }
     // Memory
     else if (keyId === 'sto') {
@@ -535,8 +586,73 @@ class HP10bII {
       case '-': return a - b;
       case '*': return a * b;
       case '/': return b === 0 ? NaN : a / b;
+      case '^': return Math.pow(a, b);
       default: return b;
     }
+  }
+
+  // Apply a unary function to the current display value
+  _handleUnary(fn) {
+    const val = this._getCurrentValue();
+    const result = fn(val);
+    if (isNaN(result) || !isFinite(result)) {
+      this._showError();
+      return;
+    }
+    this.display = this._formatNum(result);
+    this.inputBuffer = '';
+    this.isInputting = false;
+    this.justComputed = true;
+  }
+
+  // Open parenthesis: save current accumulator state and start fresh
+  _handleParenOpen() {
+    this.parenStack.push({
+      pendingOp: this.pendingOp,
+      pendingOperand: this.pendingOperand
+    });
+    this.parenDepth++;
+    this.pendingOp = null;
+    this.pendingOperand = null;
+    this.inputBuffer = '';
+    this.isInputting = false;
+    this.justComputed = false;
+    // Show opening paren depth as visual cue on display
+    this.display = '( ' + this.parenDepth;
+  }
+
+  // Close parenthesis: evaluate inner expression, pop state, apply outer op
+  _handleParenClose() {
+    if (this.parenStack.length === 0) return; // no open paren
+
+    // Evaluate any pending op in the current context
+    let innerResult = this._getCurrentValue();
+    if (this.pendingOp && this.pendingOperand !== null) {
+      innerResult = this._evalOp(this.pendingOperand, innerResult, this.pendingOp);
+    }
+
+    // Restore outer context
+    const outer = this.parenStack.pop();
+    this.parenDepth--;
+    this.pendingOp = outer.pendingOp;
+    this.pendingOperand = outer.pendingOperand;
+
+    // Apply outer pending op if any
+    if (this.pendingOp && this.pendingOperand !== null) {
+      innerResult = this._evalOp(this.pendingOperand, innerResult, this.pendingOp);
+      this.pendingOp = null;
+      this.pendingOperand = null;
+    }
+
+    if (isNaN(innerResult) || !isFinite(innerResult)) {
+      this._showError();
+      return;
+    }
+
+    this.display = this._formatNum(innerResult);
+    this.inputBuffer = '';
+    this.isInputting = false;
+    this.justComputed = true;
   }
 
   // ===== CLEAR =====
@@ -556,6 +672,8 @@ class HP10bII {
     this.pyr = 1;
     this.isBegin = false;
     this.memory = 0;
+    this.parenStack = [];
+    this.parenDepth = 0;
     this._updateAllRegs();
   }
 
