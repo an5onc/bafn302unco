@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bond YTM - Finance Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span>Finance</span> Toolkit</div>
+  </header>
+
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Bond Yield to Maturity</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Bond details</div>
+      <div class="input-grid">
+        <div class="field">
+          <label>Current Price <span class="tip" data-tip="Market price of the bond">?</span></label>
+          <input type="number" step="any" id="price" placeholder="e.g. 950">
+        </div>
+        <div class="field">
+          <label>Face Value <span class="tip" data-tip="Par value, typically $1,000">?</span></label>
+          <input type="number" step="any" id="face" placeholder="1000" value="1000">
+        </div>
+        <div class="field">
+          <label>Coupon Rate (%) <span class="tip" data-tip="Annual coupon rate">?</span></label>
+          <input type="number" step="any" id="coupon" placeholder="e.g. 6">
+        </div>
+        <div class="field">
+          <label>Years to Maturity <span class="tip" data-tip="Time until the bond matures">?</span></label>
+          <input type="number" step="any" id="years" placeholder="e.g. 10">
+        </div>
+        <div class="field">
+          <label>Payments per year</label>
+          <select id="freq">
+            <option value="1">1 (Annual)</option>
+            <option value="2" selected>2 (Semiannual)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btn-solve">Calculate YTM</button>
+      </div>
+    </div>
+
+    <div class="warnings" id="warnings"></div>
+
+    <div class="card result-card hidden" id="result-card">
+      <div class="card-title">Answer</div>
+      <div class="result-label">Yield to Maturity (YTM)</div>
+      <div class="result-primary" id="result-value"></div>
+      <div class="result-details" id="result-details"></div>
+      <button class="btn btn-outline" style="margin-top:.75rem" id="btn-copy">Copy result</button>
+      <button class="btn btn-outline" id="btn-share">Copy share link</button>
+      <button class="steps-toggle">Show steps</button>
+      <div class="steps-body" id="steps-body"></div>
+    </div>
+  </main>
+
+  <footer class="site-footer"><p>For educational use only.</p></footer>
+
+  <script src="/js/finance.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    function solve() {
+      const warn = document.getElementById('warnings');
+      UI.clearWarnings(warn);
+
+      const price = UI.getNum('price');
+      const face = UI.getNum('face');
+      const coupon = UI.getNum('coupon');
+      const years = UI.getNum('years');
+      const freq = parseInt(UI.getSel('freq'));
+
+      if ([price, face, coupon, years].some(v => isNaN(v))) {
+        UI.addWarning(warn, 'Please fill in all fields.', 'error');
+        return;
+      }
+      if (price <= 0) {
+        UI.addWarning(warn, 'Price must be positive.', 'error');
+        return;
+      }
+      if (years <= 0) {
+        UI.addWarning(warn, 'Years to maturity must be positive.', 'error');
+        return;
+      }
+
+      const ytm = Finance.bondYTM(price, face, coupon / 100, years, freq);
+
+      if (isNaN(ytm) || !isFinite(ytm)) {
+        UI.addWarning(warn, 'Could not find YTM. Check inputs.', 'error');
+        return;
+      }
+
+      const ytmPct = ytm * 100;
+      const periodicYield = ytm / freq;
+
+      document.getElementById('result-value').textContent = Finance.fmt(ytmPct, 4) + '%';
+
+      const details = document.getElementById('result-details');
+      while (details.firstChild) details.removeChild(details.firstChild);
+      addDetail(details, 'Periodic yield', Finance.fmtPct(periodicYield));
+      addDetail(details, 'Total periods', (years * freq).toString());
+
+      // Verify
+      const verifyPrice = Finance.bondPrice(face, coupon / 100, ytm, years, freq);
+      addDetail(details, 'Verify price', Finance.fmtMoney(verifyPrice));
+
+      // Steps
+      const steps = document.getElementById('steps-body');
+      while (steps.firstChild) steps.removeChild(steps.firstChild);
+
+      const p1 = document.createElement('p');
+      p1.textContent = 'YTM is the rate that makes the bond price equal to the present value of all future cash flows:';
+      steps.appendChild(p1);
+
+      const formula = document.createElement('div');
+      formula.className = 'formula';
+      formula.textContent = 'Price = C * [1 - (1+r)^(-n)] / r + FV / (1+r)^n';
+      steps.appendChild(formula);
+
+      const p2 = document.createElement('p');
+      p2.textContent = 'Solved using Newton-Raphson iteration. YTM (annualized) = ' +
+        Finance.fmt(ytmPct, 4) + '%, periodic yield = ' + Finance.fmtPct(periodicYield) + '.';
+      steps.appendChild(p2);
+
+      const p3 = document.createElement('p');
+      p3.textContent = 'Verification: at this YTM, bond price = ' + Finance.fmtMoney(verifyPrice) +
+        ' (input price = ' + Finance.fmtMoney(price) + ').';
+      steps.appendChild(p3);
+
+      UI.showResult(document.getElementById('result-card'));
+
+      document.getElementById('btn-copy').onclick = () => UI.copyText('YTM: ' + Finance.fmt(ytmPct, 4) + '%');
+      document.getElementById('btn-share').onclick = () => {
+        UI.copyText(UI.buildShareLink({ price, face, coupon, years, freq }));
+      };
+    }
+
+    function addDetail(container, label, value) {
+      const div = document.createElement('div');
+      div.className = 'result-detail';
+      const lbl = document.createElement('div');
+      lbl.className = 'detail-label';
+      lbl.textContent = label;
+      const val = document.createElement('div');
+      val.className = 'detail-value';
+      val.textContent = value;
+      div.appendChild(lbl);
+      div.appendChild(val);
+      container.appendChild(div);
+    }
+
+    document.getElementById('btn-solve').addEventListener('click', solve);
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      UI.resetForm(['price', 'coupon', 'years']);
+      UI.setVal('face', '1000');
+      document.getElementById('freq').value = '2';
+    });
+    document.getElementById('btn-example').addEventListener('click', () => {
+      UI.setVal('price', '950');
+      UI.setVal('face', '1000');
+      UI.setVal('coupon', '6');
+      UI.setVal('years', '10');
+      document.getElementById('freq').value = '2';
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      UI.loadParams(['price', 'face', 'coupon', 'years']);
+      const params = UI.getParams();
+      if (params.freq) document.getElementById('freq').value = params.freq;
+    });
+  </script>
+</body>
+</html>

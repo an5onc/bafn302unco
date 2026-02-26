@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Finance Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span>Finance</span> Toolkit</div>
+    <div class="search-box">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="search" placeholder="Search tools..." autocomplete="off">
+    </div>
+  </header>
+
+  <main class="container" id="dashboard"></main>
+
+  <footer class="site-footer">
+    <p>For educational use only. Not financial advice. <a href="#sign-conventions" id="sign-link">Sign convention guide</a></p>
+  </footer>
+
+  <script src="/js/registry.js"></script>
+  <script>
+    function renderDashboard(filter) {
+      const container = document.getElementById('dashboard');
+      // Clear
+      while (container.firstChild) container.removeChild(container.firstChild);
+
+      // Group by category
+      const categories = {};
+      TOOL_REGISTRY.forEach(tool => {
+        if (filter) {
+          const q = filter.toLowerCase();
+          if (!tool.title.toLowerCase().includes(q) && !tool.description.toLowerCase().includes(q)) return;
+        }
+        if (!categories[tool.category]) categories[tool.category] = [];
+        categories[tool.category].push(tool);
+      });
+
+      if (Object.keys(categories).length === 0) {
+        const p = document.createElement('p');
+        p.textContent = 'No tools match your search.';
+        p.style.cssText = 'text-align:center;color:var(--text-muted);margin-top:3rem';
+        container.appendChild(p);
+        return;
+      }
+
+      Object.entries(categories).forEach(([cat, tools]) => {
+        const section = document.createElement('section');
+        section.className = 'category-section';
+
+        const h2 = document.createElement('h2');
+        h2.textContent = cat;
+        section.appendChild(h2);
+
+        const grid = document.createElement('div');
+        grid.className = 'tool-grid';
+
+        tools.forEach(tool => {
+          const card = document.createElement('div');
+          card.className = 'tool-card';
+          card.addEventListener('click', () => { window.location.href = tool.path; });
+
+          const h3 = document.createElement('h3');
+          h3.textContent = tool.title;
+          card.appendChild(h3);
+
+          const p = document.createElement('p');
+          p.textContent = tool.description;
+          card.appendChild(p);
+
+          const btn = document.createElement('button');
+          btn.className = 'open-btn';
+          btn.textContent = 'Open';
+          card.appendChild(btn);
+
+          grid.appendChild(card);
+        });
+
+        section.appendChild(grid);
+        container.appendChild(section);
+      });
+    }
+
+    renderDashboard();
+
+    document.getElementById('search').addEventListener('input', function () {
+      renderDashboard(this.value);
+    });
+  </script>
+</body>
+</html>

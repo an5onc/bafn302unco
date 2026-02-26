@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Annuity PV/FV - Finance Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span>Finance</span> Toolkit</div>
+  </header>
+
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Annuity PV / FV</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">What you know</div>
+
+      <div class="mode-switch" id="mode-switch">
+        <button class="active" data-mode="pv">PV of Annuity</button>
+        <button data-mode="fv">FV of Annuity</button>
+      </div>
+
+      <div class="mode-switch" id="timing-switch">
+        <button class="active" data-timing="end">Ordinary (END)</button>
+        <button data-timing="begin">Due (BEGIN)</button>
+      </div>
+
+      <div class="input-grid">
+        <div class="field">
+          <label>PMT <span class="tip" data-tip="Payment per period">?</span></label>
+          <input type="number" step="any" id="pmt" placeholder="e.g. 100">
+        </div>
+        <div class="field">
+          <label>Annual Rate (%) <span class="tip" data-tip="Nominal annual rate (APR)">?</span></label>
+          <input type="number" step="any" id="rate" placeholder="e.g. 6">
+        </div>
+        <div class="field">
+          <label>Years <span class="tip" data-tip="Number of years">?</span></label>
+          <input type="number" step="any" id="years" placeholder="e.g. 20">
+        </div>
+        <div class="field">
+          <label>Payments per year</label>
+          <select id="pyr">
+            <option value="1">1 (Annual)</option>
+            <option value="2">2 (Semiannual)</option>
+            <option value="4">4 (Quarterly)</option>
+            <option value="12" selected>12 (Monthly)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btn-solve">Solve</button>
+      </div>
+    </div>
+
+    <div class="warnings" id="warnings"></div>
+
+    <div class="card result-card hidden" id="result-card">
+      <div class="card-title">Answer</div>
+      <div class="result-label" id="result-label"></div>
+      <div class="result-primary" id="result-value"></div>
+      <div class="result-details" id="result-details"></div>
+      <button class="btn btn-outline" style="margin-top:.75rem" id="btn-copy">Copy result</button>
+      <button class="btn btn-outline" id="btn-share">Copy share link</button>
+      <button class="steps-toggle">Show steps</button>
+      <div class="steps-body" id="steps-body"></div>
+    </div>
+
+    <div class="card notes-card">
+      <p><strong>Ordinary annuity:</strong> Payments at the end of each period. <strong>Annuity due:</strong> Payments at the beginning of each period (multiply ordinary result by (1+r)).</p>
+    </div>
+  </main>
+
+  <footer class="site-footer"><p>For educational use only.</p></footer>
+
+  <script src="/js/finance.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    let calcMode = 'pv';
+    let timing = 'end';
+
+    document.getElementById('mode-switch').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      calcMode = btn.dataset.mode;
+      document.querySelectorAll('#mode-switch button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+
+    document.getElementById('timing-switch').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      timing = btn.dataset.timing;
+      document.querySelectorAll('#timing-switch button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+
+    function solve() {
+      const warn = document.getElementById('warnings');
+      UI.clearWarnings(warn);
+
+      const pmt = UI.getNum('pmt');
+      const rate = UI.getNum('rate');
+      const years = UI.getNum('years');
+      const pyr = parseInt(UI.getSel('pyr'));
+
+      if (isNaN(pmt) || isNaN(rate) || isNaN(years)) {
+        UI.addWarning(warn, 'Please fill in PMT, rate, and years.', 'error');
+        return;
+      }
+
+      const r = (rate / 100) / pyr;
+      const n = years * pyr;
+      const isDue = timing === 'begin';
+      let result, label, resultStr;
+
+      if (calcMode === 'pv') {
+        // PV of annuity
+        if (r === 0) {
+          result = pmt * n;
+        } else {
+          result = pmt * (1 - Math.pow(1 + r, -n)) / r;
+        }
+        if (isDue) result *= (1 + r);
+        label = 'Present Value of Annuity';
+        resultStr = Finance.fmtMoney(result);
+      } else {
+        // FV of annuity
+        if (r === 0) {
+          result = pmt * n;
+        } else {
+          result = pmt * (Math.pow(1 + r, n) - 1) / r;
+        }
+        if (isDue) result *= (1 + r);
+        label = 'Future Value of Annuity';
+        resultStr = Finance.fmtMoney(result);
+      }
+
+      document.getElementById('result-label').textContent = label;
+      document.getElementById('result-value').textContent = resultStr;
+
+      const details = document.getElementById('result-details');
+      while (details.firstChild) details.removeChild(details.firstChild);
+      addDetail(details, 'Number of payments', n.toString());
+      addDetail(details, 'Periodic rate', Finance.fmtPct(r));
+      addDetail(details, 'Total payments', Finance.fmtMoney(pmt * n));
+      if (calcMode === 'pv') {
+        addDetail(details, 'Total interest', Finance.fmtMoney(Math.abs(result) - Math.abs(pmt * n)));
+      }
+
+      // Steps
+      const steps = document.getElementById('steps-body');
+      while (steps.firstChild) steps.removeChild(steps.firstChild);
+
+      const formula = document.createElement('div');
+      formula.className = 'formula';
+      if (calcMode === 'pv') {
+        formula.textContent = 'PV = PMT * [1 - (1+r)^(-n)] / r' + (isDue ? ' * (1+r)' : '');
+      } else {
+        formula.textContent = 'FV = PMT * [(1+r)^n - 1] / r' + (isDue ? ' * (1+r)' : '');
+      }
+      steps.appendChild(formula);
+
+      const p = document.createElement('p');
+      p.textContent = 'PMT = ' + Finance.fmtMoney(pmt) + ', r = ' + Finance.fmtPct(r) +
+        ', n = ' + n + (isDue ? ' (annuity due)' : ' (ordinary)');
+      steps.appendChild(p);
+
+      const p2 = document.createElement('p');
+      p2.textContent = label + ' = ' + resultStr;
+      steps.appendChild(p2);
+
+      UI.showResult(document.getElementById('result-card'));
+
+      document.getElementById('btn-copy').onclick = () => UI.copyText(label + ': ' + resultStr);
+      document.getElementById('btn-share').onclick = () => {
+        UI.copyText(UI.buildShareLink({
+          mode: calcMode, timing, pmt, rate, years, pyr
+        }));
+      };
+    }
+
+    function addDetail(container, label, value) {
+      const div = document.createElement('div');
+      div.className = 'result-detail';
+      const lbl = document.createElement('div');
+      lbl.className = 'detail-label';
+      lbl.textContent = label;
+      const val = document.createElement('div');
+      val.className = 'detail-value';
+      val.textContent = value;
+      div.appendChild(lbl);
+      div.appendChild(val);
+      container.appendChild(div);
+    }
+
+    document.getElementById('btn-solve').addEventListener('click', solve);
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      UI.resetForm(['pmt', 'rate', 'years']);
+      document.getElementById('pyr').value = '12';
+    });
+    document.getElementById('btn-example').addEventListener('click', () => {
+      calcMode = 'pv';
+      timing = 'end';
+      document.querySelectorAll('#mode-switch button').forEach(b => b.classList.remove('active'));
+      document.querySelector('#mode-switch button[data-mode="pv"]').classList.add('active');
+      document.querySelectorAll('#timing-switch button').forEach(b => b.classList.remove('active'));
+      document.querySelector('#timing-switch button[data-timing="end"]').classList.add('active');
+      UI.setVal('pmt', '500');
+      UI.setVal('rate', '6');
+      UI.setVal('years', '20');
+      document.getElementById('pyr').value = '12';
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = UI.getParams();
+      if (params.mode === 'fv') document.querySelector('#mode-switch button[data-mode="fv"]').click();
+      if (params.timing === 'begin') document.querySelector('#timing-switch button[data-timing="begin"]').click();
+      UI.loadParams(['pmt', 'rate', 'years']);
+      if (params.pyr) document.getElementById('pyr').value = params.pyr;
+    });
+  </script>
+</body>
+</html>

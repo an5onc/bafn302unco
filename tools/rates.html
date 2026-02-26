@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>APR / EAR Converter - Finance Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span>Finance</span> Toolkit</div>
+  </header>
+
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>APR / EAR Converter</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Convert</div>
+
+      <div class="mode-switch" id="mode-switch">
+        <button class="active" data-mode="apr-to-ear">APR &rarr; EAR</button>
+        <button data-mode="ear-to-apr">EAR &rarr; APR</button>
+      </div>
+
+      <div class="input-grid">
+        <div class="field" id="field-apr">
+          <label>APR (%) <span class="tip" data-tip="Nominal annual percentage rate">?</span></label>
+          <input type="number" step="any" id="apr" placeholder="e.g. 12">
+        </div>
+        <div class="field" id="field-ear" style="display:none">
+          <label>EAR (%) <span class="tip" data-tip="Effective annual rate">?</span></label>
+          <input type="number" step="any" id="ear" placeholder="e.g. 12.68">
+        </div>
+        <div class="field">
+          <label>Compounding periods/year (m) <span class="tip" data-tip="How many times per year interest compounds">?</span></label>
+          <select id="m">
+            <option value="2">2 (Semiannual)</option>
+            <option value="4">4 (Quarterly)</option>
+            <option value="12" selected>12 (Monthly)</option>
+            <option value="365">365 (Daily)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btn-solve">Convert</button>
+      </div>
+    </div>
+
+    <div class="warnings" id="warnings"></div>
+
+    <div class="card result-card hidden" id="result-card">
+      <div class="card-title">Answer</div>
+      <div class="result-label" id="result-label"></div>
+      <div class="result-primary" id="result-value"></div>
+      <div class="result-details" id="result-details"></div>
+      <button class="btn btn-outline" style="margin-top:.75rem" id="btn-copy">Copy result</button>
+      <button class="btn btn-outline" id="btn-share">Copy share link</button>
+      <button class="steps-toggle">Show steps</button>
+      <div class="steps-body" id="steps-body"></div>
+    </div>
+
+    <div class="card notes-card">
+      <p><strong>APR</strong> (nominal rate) is the stated annual rate without compounding. <strong>EAR</strong> (effective annual rate) reflects the actual annual return after compounding. EAR &ge; APR when compounding is more than once per year.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer"><p>For educational use only.</p></footer>
+
+  <script src="/js/finance.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    let mode = 'apr-to-ear';
+
+    document.getElementById('mode-switch').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      mode = btn.dataset.mode;
+      document.querySelectorAll('#mode-switch button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('field-apr').style.display = mode === 'apr-to-ear' ? '' : 'none';
+      document.getElementById('field-ear').style.display = mode === 'ear-to-apr' ? '' : 'none';
+    });
+
+    function solve() {
+      const warn = document.getElementById('warnings');
+      UI.clearWarnings(warn);
+
+      const m = parseInt(UI.getSel('m'));
+      let result, label, resultStr, periodicRate;
+
+      if (mode === 'apr-to-ear') {
+        const apr = UI.getNum('apr');
+        if (isNaN(apr)) { UI.addWarning(warn, 'Enter an APR.', 'error'); return; }
+        result = Finance.aprToEar(apr / 100, m);
+        periodicRate = (apr / 100) / m;
+        label = 'Effective Annual Rate (EAR)';
+        resultStr = Finance.fmt(result * 100, 4) + '%';
+      } else {
+        const ear = UI.getNum('ear');
+        if (isNaN(ear)) { UI.addWarning(warn, 'Enter an EAR.', 'error'); return; }
+        result = Finance.earToApr(ear / 100, m);
+        periodicRate = result / m;
+        label = 'Annual Percentage Rate (APR)';
+        resultStr = Finance.fmt(result * 100, 4) + '%';
+      }
+
+      document.getElementById('result-label').textContent = label;
+      document.getElementById('result-value').textContent = resultStr;
+
+      const details = document.getElementById('result-details');
+      while (details.firstChild) details.removeChild(details.firstChild);
+      addDetail(details, 'Periodic rate', Finance.fmtPct(periodicRate));
+      addDetail(details, 'Compounding (m)', m.toString());
+
+      // Steps
+      const steps = document.getElementById('steps-body');
+      while (steps.firstChild) steps.removeChild(steps.firstChild);
+
+      const formula = document.createElement('div');
+      formula.className = 'formula';
+      if (mode === 'apr-to-ear') {
+        formula.textContent = 'EAR = (1 + APR/m)^m - 1';
+      } else {
+        formula.textContent = 'APR = m * [(1 + EAR)^(1/m) - 1]';
+      }
+      steps.appendChild(formula);
+
+      const p = document.createElement('p');
+      p.textContent = 'm = ' + m + ', periodic rate = ' + Finance.fmtPct(periodicRate);
+      steps.appendChild(p);
+
+      const p2 = document.createElement('p');
+      p2.textContent = label + ' = ' + resultStr;
+      steps.appendChild(p2);
+
+      UI.showResult(document.getElementById('result-card'));
+
+      document.getElementById('btn-copy').onclick = () => UI.copyText(label + ': ' + resultStr);
+      document.getElementById('btn-share').onclick = () => {
+        const params = { mode, m };
+        if (mode === 'apr-to-ear') params.apr = UI.getNum('apr');
+        else params.ear = UI.getNum('ear');
+        UI.copyText(UI.buildShareLink(params));
+      };
+    }
+
+    function addDetail(container, label, value) {
+      const div = document.createElement('div');
+      div.className = 'result-detail';
+      const lbl = document.createElement('div');
+      lbl.className = 'detail-label';
+      lbl.textContent = label;
+      const val = document.createElement('div');
+      val.className = 'detail-value';
+      val.textContent = value;
+      div.appendChild(lbl);
+      div.appendChild(val);
+      container.appendChild(div);
+    }
+
+    document.getElementById('btn-solve').addEventListener('click', solve);
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      UI.resetForm(['apr', 'ear']);
+      document.getElementById('m').value = '12';
+    });
+    document.getElementById('btn-example').addEventListener('click', () => {
+      mode = 'apr-to-ear';
+      document.querySelectorAll('#mode-switch button').forEach(b => b.classList.remove('active'));
+      document.querySelector('#mode-switch button[data-mode="apr-to-ear"]').classList.add('active');
+      document.getElementById('field-apr').style.display = '';
+      document.getElementById('field-ear').style.display = 'none';
+      UI.setVal('apr', '12');
+      document.getElementById('m').value = '12';
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = UI.getParams();
+      if (params.mode === 'ear-to-apr') {
+        document.querySelector('#mode-switch button[data-mode="ear-to-apr"]').click();
+      }
+      UI.loadParams(['apr', 'ear']);
+      if (params.m) document.getElementById('m').value = params.m;
+    });
+  </script>
+</body>
+</html>

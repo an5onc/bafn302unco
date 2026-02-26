@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bond YTC - Finance Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span>Finance</span> Toolkit</div>
+  </header>
+
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Bond Yield to Call</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Bond details</div>
+      <div class="input-grid">
+        <div class="field">
+          <label>Current Price <span class="tip" data-tip="Market price of the bond today">?</span></label>
+          <input type="number" step="any" id="price" placeholder="e.g. 1050">
+        </div>
+        <div class="field">
+          <label>Face Value <span class="tip" data-tip="Par value of the bond, typically $1,000">?</span></label>
+          <input type="number" step="any" id="face" placeholder="1000" value="1000">
+        </div>
+        <div class="field">
+          <label>Call Price <span class="tip" data-tip="Price the issuer pays to call the bond (often face + a premium)">?</span></label>
+          <input type="number" step="any" id="call-price" placeholder="e.g. 1050">
+        </div>
+        <div class="field">
+          <label>Coupon Rate (%) <span class="tip" data-tip="Annual coupon rate (coupons based on face value)">?</span></label>
+          <input type="number" step="any" id="coupon" placeholder="e.g. 8">
+        </div>
+        <div class="field">
+          <label>Years to Call <span class="tip" data-tip="Years until the first call date">?</span></label>
+          <input type="number" step="any" id="years" placeholder="e.g. 5">
+        </div>
+        <div class="field">
+          <label>Payments per year</label>
+          <select id="freq">
+            <option value="1">1 (Annual)</option>
+            <option value="2" selected>2 (Semiannual)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btn-solve">Calculate YTC</button>
+      </div>
+    </div>
+
+    <div class="warnings" id="warnings"></div>
+
+    <div class="card result-card hidden" id="result-card">
+      <div class="card-title">Answer</div>
+      <div class="result-label">Yield to Call (YTC)</div>
+      <div class="result-primary" id="result-value"></div>
+      <div class="result-details" id="result-details"></div>
+      <button class="btn btn-outline" style="margin-top:.75rem" id="btn-copy">Copy result</button>
+      <button class="btn btn-outline" id="btn-share">Copy share link</button>
+      <button class="steps-toggle">Show steps</button>
+      <div class="steps-body" id="steps-body"></div>
+    </div>
+
+    <div class="card notes-card">
+      <p><strong>Yield to Call</strong> is the return you earn if the bond is called at the first call date rather than held to maturity. It uses the same bond pricing formula but substitutes the <strong>call price</strong> for face value and <strong>years to call</strong> for years to maturity. Coupon payments are still based on the original face value. If YTC &lt; YTM, the issuer is more likely to call the bond.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer"><p>For educational use only.</p></footer>
+
+  <script src="/js/finance.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    function solve() {
+      const warn = document.getElementById('warnings');
+      UI.clearWarnings(warn);
+
+      const price = UI.getNum('price');
+      const face = UI.getNum('face');
+      const callPrice = UI.getNum('call-price');
+      const coupon = UI.getNum('coupon');
+      const years = UI.getNum('years');
+      const freq = parseInt(UI.getSel('freq'));
+
+      if ([price, face, callPrice, coupon, years].some(v => isNaN(v))) {
+        UI.addWarning(warn, 'Please fill in all fields.', 'error');
+        return;
+      }
+      if (price <= 0) {
+        UI.addWarning(warn, 'Price must be positive.', 'error');
+        return;
+      }
+      if (years <= 0) {
+        UI.addWarning(warn, 'Years to call must be positive.', 'error');
+        return;
+      }
+      if (callPrice <= 0) {
+        UI.addWarning(warn, 'Call price must be positive.', 'error');
+        return;
+      }
+
+      const ytc = Finance.bondYTC(price, face, callPrice, coupon / 100, years, freq);
+
+      if (isNaN(ytc) || !isFinite(ytc)) {
+        UI.addWarning(warn, 'Could not find YTC. Check your inputs.', 'error');
+        return;
+      }
+
+      const ytcPct = ytc * 100;
+      const periodicYield = ytc / freq;
+      const couponPerPeriod = (coupon / 100 / freq) * face;
+      const n = years * freq;
+
+      document.getElementById('result-value').textContent = Finance.fmt(ytcPct, 4) + '%';
+
+      const details = document.getElementById('result-details');
+      while (details.firstChild) details.removeChild(details.firstChild);
+      addDetail(details, 'Periodic yield', Finance.fmtPct(periodicYield));
+      addDetail(details, 'Coupon/period', Finance.fmtMoney(couponPerPeriod));
+      addDetail(details, 'Periods to call', n.toString());
+
+      // Verify: price the bond at the solved YTC
+      const verifyPrice = Finance.bondPriceToCall(face, callPrice, coupon / 100, years, ytc, freq);
+      addDetail(details, 'Verify price', Finance.fmtMoney(verifyPrice));
+
+      // Compare with YTM hint
+      if (callPrice > price) {
+        UI.addWarning(warn, 'Call price exceeds current price — calling would produce a capital gain for the holder.', 'info');
+      } else if (callPrice < price) {
+        UI.addWarning(warn, 'Current price exceeds call price — calling would produce a capital loss for the holder.', 'warn');
+      }
+
+      // Steps
+      const steps = document.getElementById('steps-body');
+      while (steps.firstChild) steps.removeChild(steps.firstChild);
+
+      const p1 = document.createElement('p');
+      p1.textContent = 'YTC uses the same bond pricing formula as YTM, but replaces face value with the call price and years to maturity with years to call:';
+      steps.appendChild(p1);
+
+      const formula = document.createElement('div');
+      formula.className = 'formula';
+      formula.textContent = 'Price = C * [1 - (1+r)^(-n)] / r + CallPrice / (1+r)^n';
+      steps.appendChild(formula);
+
+      const p2 = document.createElement('p');
+      p2.textContent = 'where C = coupon per period = ' + Finance.fmtMoney(couponPerPeriod) +
+        ' (based on face value ' + Finance.fmtMoney(face) + '), n = ' + n +
+        ' periods, CallPrice = ' + Finance.fmtMoney(callPrice) + '.';
+      steps.appendChild(p2);
+
+      const p3 = document.createElement('p');
+      p3.textContent = 'Solved via Newton-Raphson iteration.';
+      steps.appendChild(p3);
+
+      const p4 = document.createElement('p');
+      p4.textContent = 'YTC (annualized) = ' + Finance.fmt(ytcPct, 4) +
+        '%, periodic yield = ' + Finance.fmtPct(periodicYield) + '.';
+      steps.appendChild(p4);
+
+      const p5 = document.createElement('p');
+      p5.textContent = 'Verification: at this YTC, the bond prices to ' +
+        Finance.fmtMoney(verifyPrice) + ' (input price = ' + Finance.fmtMoney(price) + ').';
+      steps.appendChild(p5);
+
+      UI.showResult(document.getElementById('result-card'));
+
+      document.getElementById('btn-copy').onclick = () => UI.copyText('YTC: ' + Finance.fmt(ytcPct, 4) + '%');
+      document.getElementById('btn-share').onclick = () => {
+        UI.copyText(UI.buildShareLink({
+          price, face, 'call-price': callPrice, coupon, years, freq
+        }));
+      };
+    }
+
+    function addDetail(container, label, value) {
+      const div = document.createElement('div');
+      div.className = 'result-detail';
+      const lbl = document.createElement('div');
+      lbl.className = 'detail-label';
+      lbl.textContent = label;
+      const val = document.createElement('div');
+      val.className = 'detail-value';
+      val.textContent = value;
+      div.appendChild(lbl);
+      div.appendChild(val);
+      container.appendChild(div);
+    }
+
+    document.getElementById('btn-solve').addEventListener('click', solve);
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      UI.resetForm(['price', 'call-price', 'coupon', 'years']);
+      UI.setVal('face', '1000');
+      document.getElementById('freq').value = '2';
+    });
+    document.getElementById('btn-example').addEventListener('click', () => {
+      // Classic example: 8% coupon bond trading at $1,100, callable in 5 years at $1,050
+      UI.setVal('price', '1100');
+      UI.setVal('face', '1000');
+      UI.setVal('call-price', '1050');
+      UI.setVal('coupon', '8');
+      UI.setVal('years', '5');
+      document.getElementById('freq').value = '2';
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      UI.loadParams(['price', 'face', 'call-price', 'coupon', 'years']);
+      const params = UI.getParams();
+      if (params.freq) document.getElementById('freq').value = params.freq;
+    });
+  </script>
+</body>
+</html>

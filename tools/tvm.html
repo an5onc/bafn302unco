@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TVM Solver - Finance Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span>Finance</span> Toolkit</div>
+  </header>
+
+  <main class="container">
+    <!-- Top Bar -->
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>TVM Solver</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <!-- Inputs -->
+    <div class="card">
+      <div class="card-title">What you know (leave one blank to solve)</div>
+      <div class="input-grid">
+        <div class="field">
+          <label>N <span class="tip" data-tip="Number of compounding periods">?</span></label>
+          <input type="number" step="any" id="n" placeholder="e.g. 10">
+        </div>
+        <div class="field">
+          <label>I/YR (%) <span class="tip" data-tip="Annual interest rate (nominal APR)">?</span></label>
+          <input type="number" step="any" id="iyr" placeholder="e.g. 8">
+        </div>
+        <div class="field">
+          <label>PV <span class="tip" data-tip="Present value (negative = outflow)">?</span></label>
+          <input type="number" step="any" id="pv" placeholder="e.g. -1000">
+        </div>
+        <div class="field">
+          <label>PMT <span class="tip" data-tip="Payment per period (negative = outflow)">?</span></label>
+          <input type="number" step="any" id="pmt" placeholder="e.g. 0">
+        </div>
+        <div class="field">
+          <label>FV <span class="tip" data-tip="Future value (negative = outflow)">?</span></label>
+          <input type="number" step="any" id="fv" placeholder="e.g. 2158.92">
+        </div>
+      </div>
+
+      <!-- Advanced -->
+      <button class="advanced-toggle" style="margin-top:1rem">
+        <span class="arrow">&#9654;</span> Advanced options
+      </button>
+      <div class="advanced-body">
+        <div class="input-grid" style="margin-top:.5rem">
+          <div class="field">
+            <label>P/YR <span class="tip" data-tip="Payments (and compounding periods) per year">?</span></label>
+            <select id="pyr">
+              <option value="1" selected>1 (Annual)</option>
+              <option value="2">2 (Semiannual)</option>
+              <option value="4">4 (Quarterly)</option>
+              <option value="12">12 (Monthly)</option>
+              <option value="365">365 (Daily)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Payment timing</label>
+            <select id="mode">
+              <option value="end" selected>END (Ordinary)</option>
+              <option value="begin">BEGIN (Annuity Due)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btn-solve">Solve</button>
+      </div>
+    </div>
+
+    <!-- Warnings -->
+    <div class="warnings" id="warnings"></div>
+
+    <!-- Results -->
+    <div class="card result-card hidden" id="result-card">
+      <div class="card-title">Answer</div>
+      <div class="result-label" id="result-label"></div>
+      <div class="result-primary" id="result-value"></div>
+
+      <div class="result-details" id="result-details"></div>
+
+      <button class="btn btn-outline" style="margin-top:.75rem" id="btn-copy">Copy result</button>
+      <button class="btn btn-outline" id="btn-share">Copy share link</button>
+
+      <button class="steps-toggle">Show steps</button>
+      <div class="steps-body" id="steps-body"></div>
+    </div>
+
+    <!-- Notes -->
+    <div class="card notes-card">
+      <p><strong>Sign convention:</strong> Cash outflows (money you pay) are negative. Cash inflows (money you receive) are positive. For example, if you invest $1,000 today, PV = -1000.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>For educational use only. Not financial advice.</p>
+  </footer>
+
+  <script src="/js/finance.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    const FIELDS = ['n', 'iyr', 'pv', 'pmt', 'fv'];
+    const ADV_FIELDS = ['pyr', 'mode'];
+
+    function solve() {
+      const warn = document.getElementById('warnings');
+      UI.clearWarnings(warn);
+
+      const vals = {};
+      let blankCount = 0;
+      let blankField = null;
+      FIELDS.forEach(f => {
+        vals[f] = UI.getNum(f);
+        if (isNaN(vals[f])) { blankCount++; blankField = f; }
+      });
+
+      if (blankCount === 0) {
+        UI.addWarning(warn, 'All fields are filled. Leave one blank to solve for it, or clear a field.', 'info');
+        return;
+      }
+      if (blankCount > 1) {
+        UI.addWarning(warn, 'Leave exactly one field blank. You have ' + blankCount + ' blank fields.', 'error');
+        return;
+      }
+
+      const pyr = parseInt(UI.getSel('pyr'));
+      const isDue = UI.getSel('mode') === 'begin';
+      const r = (vals.iyr / 100) / pyr; // periodic rate
+
+      let result, label, resultStr;
+
+      switch (blankField) {
+        case 'fv':
+          result = Finance.fv(vals.pv, vals.pmt, r, vals.n, isDue);
+          label = 'Future Value (FV)';
+          resultStr = Finance.fmtMoney(result);
+          break;
+        case 'pv':
+          result = Finance.pv(vals.fv, vals.pmt, r, vals.n, isDue);
+          label = 'Present Value (PV)';
+          resultStr = Finance.fmtMoney(result);
+          break;
+        case 'pmt':
+          result = Finance.pmt(vals.pv, vals.fv, r, vals.n, isDue);
+          label = 'Payment (PMT)';
+          resultStr = Finance.fmtMoney(result);
+          break;
+        case 'n':
+          result = Finance.nper(vals.pv, vals.fv, vals.pmt, r, isDue);
+          label = 'Number of Periods (N)';
+          resultStr = Finance.fmt(result, 4);
+          break;
+        case 'iyr':
+          const rSolved = Finance.rate(vals.pv, vals.fv, vals.pmt, vals.n, isDue);
+          result = rSolved * pyr * 100;
+          label = 'Interest Rate (I/YR)';
+          resultStr = Finance.fmt(result, 4) + '%';
+          break;
+      }
+
+      if (isNaN(result) || !isFinite(result)) {
+        UI.addWarning(warn, 'No solution found. Check your inputs and sign conventions.', 'error');
+        return;
+      }
+
+      // Validation warnings
+      const allVals = { ...vals };
+      allVals[blankField] = result;
+      const signs = [allVals.pv, allVals.pmt, allVals.fv].filter(v => v !== 0);
+      if (signs.length > 0 && signs.every(v => v > 0)) {
+        UI.addWarning(warn, 'All cash flows are positive. Check your sign conventions.', 'warn');
+      }
+      if (signs.length > 0 && signs.every(v => v < 0)) {
+        UI.addWarning(warn, 'All cash flows are negative. Check your sign conventions.', 'warn');
+      }
+      if (allVals.n <= 0 && blankField !== 'n') {
+        UI.addWarning(warn, 'N is zero or negative.', 'warn');
+      }
+
+      // Display
+      document.getElementById('result-label').textContent = label;
+      document.getElementById('result-value').textContent = resultStr;
+
+      // Details
+      const details = document.getElementById('result-details');
+      while (details.firstChild) details.removeChild(details.firstChild);
+
+      const periodicRate = blankField === 'iyr' ? (result / 100) / pyr : r;
+      addDetail(details, 'Periodic rate', Finance.fmtPct(periodicRate));
+      addDetail(details, 'Total periods', Finance.fmt(blankField === 'n' ? result : vals.n, 2));
+      if (pyr > 1) addDetail(details, 'P/YR', pyr.toString());
+      if (isDue) addDetail(details, 'Timing', 'BEGIN (Due)');
+
+      // Total paid / total interest (when PMT exists)
+      const pmtVal = blankField === 'pmt' ? result : vals.pmt;
+      const nVal = blankField === 'n' ? result : vals.n;
+      if (pmtVal !== 0) {
+        addDetail(details, 'Total paid', Finance.fmtMoney(pmtVal * nVal));
+      }
+
+      // Steps
+      const steps = document.getElementById('steps-body');
+      while (steps.firstChild) steps.removeChild(steps.firstChild);
+
+      const p1 = document.createElement('p');
+      p1.textContent = isDue
+        ? 'Using the TVM equation with annuity due (payments at the beginning of each period):'
+        : 'Using the standard TVM equation (payments at the end of each period):';
+      steps.appendChild(p1);
+
+      const formula = document.createElement('div');
+      formula.className = 'formula';
+      formula.textContent = 'PV(1+r)^n + PMT * [((1+r)^n - 1) / r] * (1+r*t) + FV = 0';
+      steps.appendChild(formula);
+
+      const p2 = document.createElement('p');
+      p2.textContent = 'where r = ' + Finance.fmtPct(periodicRate) +
+        ', n = ' + Finance.fmt(blankField === 'n' ? result : vals.n, 2) +
+        ', t = ' + (isDue ? '1' : '0');
+      steps.appendChild(p2);
+
+      const p3 = document.createElement('p');
+      p3.textContent = 'Solving for ' + blankField.toUpperCase() + ' yields ' + resultStr + '.';
+      steps.appendChild(p3);
+
+      UI.showResult(document.getElementById('result-card'));
+
+      // Store for copy
+      document.getElementById('btn-copy').onclick = () => UI.copyText(label + ': ' + resultStr);
+      document.getElementById('btn-share').onclick = () => {
+        const params = {};
+        FIELDS.forEach(f => { const v = UI.getNum(f); if (!isNaN(v)) params[f] = v; });
+        params.pyr = UI.getSel('pyr');
+        params.mode = UI.getSel('mode');
+        UI.copyText(UI.buildShareLink(params));
+      };
+    }
+
+    function addDetail(container, label, value) {
+      const div = document.createElement('div');
+      div.className = 'result-detail';
+      const lbl = document.createElement('div');
+      lbl.className = 'detail-label';
+      lbl.textContent = label;
+      const val = document.createElement('div');
+      val.className = 'detail-value';
+      val.textContent = value;
+      div.appendChild(lbl);
+      div.appendChild(val);
+      container.appendChild(div);
+    }
+
+    document.getElementById('btn-solve').addEventListener('click', solve);
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      UI.resetForm(FIELDS);
+      document.getElementById('pyr').value = '1';
+      document.getElementById('mode').value = 'end';
+    });
+    document.getElementById('btn-example').addEventListener('click', () => {
+      UI.setVal('n', '10');
+      UI.setVal('iyr', '8');
+      UI.setVal('pv', '-1000');
+      UI.setVal('pmt', '0');
+      UI.setVal('fv', '');
+      document.getElementById('pyr').value = '1';
+      document.getElementById('mode').value = 'end';
+    });
+
+    // Load from URL params
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = UI.getParams();
+      if (Object.keys(params).length > 0) {
+        UI.loadParams(FIELDS);
+        if (params.pyr) document.getElementById('pyr').value = params.pyr;
+        if (params.mode) document.getElementById('mode').value = params.mode;
+      }
+    });
+  </script>
+</body>
+</html>

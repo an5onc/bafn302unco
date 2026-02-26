@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NPV Calculator - Finance Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span>Finance</span> Toolkit</div>
+  </header>
+
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>NPV Calculator</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Discount rate</div>
+      <div class="input-grid">
+        <div class="field">
+          <label>Discount Rate (%) <span class="tip" data-tip="Required rate of return per period">?</span></label>
+          <input type="number" step="any" id="rate" placeholder="e.g. 10">
+        </div>
+        <div class="field">
+          <label>Rate is per</label>
+          <select id="rate-basis">
+            <option value="period" selected>Period (matches cash flow periods)</option>
+            <option value="annual">Annual (APR, cash flows are annual)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Cash flows</div>
+      <div id="cf-container"></div>
+    </div>
+
+    <div class="btn-group" style="margin-bottom:1rem">
+      <button class="btn btn-primary" id="btn-solve">Calculate NPV</button>
+    </div>
+
+    <div class="warnings" id="warnings"></div>
+
+    <div class="card result-card hidden" id="result-card">
+      <div class="card-title">Answer</div>
+      <div class="result-label">Net Present Value (NPV)</div>
+      <div class="result-primary" id="result-value"></div>
+      <div class="result-details" id="result-details"></div>
+      <button class="btn btn-outline" style="margin-top:.75rem" id="btn-copy">Copy result</button>
+      <button class="btn btn-outline" id="btn-share">Copy share link</button>
+      <button class="steps-toggle">Show steps</button>
+      <div class="steps-body" id="steps-body"></div>
+    </div>
+
+    <div class="card notes-card">
+      <p><strong>NPV:</strong> The sum of all cash flows discounted to time 0. NPV &gt; 0 means the project adds value at the given discount rate. Period 0 is typically the initial investment (negative).</p>
+    </div>
+  </main>
+
+  <footer class="site-footer"><p>For educational use only.</p></footer>
+
+  <script src="/js/finance.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    let cfTable;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      cfTable = UI.createCFTable('cf-container', 6);
+
+      // Load from URL
+      const params = UI.getParams();
+      if (params.rate) UI.setVal('rate', params.rate);
+      if (params.basis) document.getElementById('rate-basis').value = params.basis;
+      if (params.cfs) {
+        try {
+          const cfs = JSON.parse(params.cfs);
+          cfTable.setFlows(cfs);
+        } catch (e) { /* ignore */ }
+      }
+    });
+
+    function solve() {
+      const warn = document.getElementById('warnings');
+      UI.clearWarnings(warn);
+
+      const rate = UI.getNum('rate');
+      if (isNaN(rate)) {
+        UI.addWarning(warn, 'Enter a discount rate.', 'error');
+        return;
+      }
+
+      const flows = cfTable.getFlows();
+      if (flows.length < 2) {
+        UI.addWarning(warn, 'Need at least an initial cash flow (CF0) and one future cash flow.', 'error');
+        return;
+      }
+
+      const r = rate / 100;
+      const npv = Finance.npv(r, flows);
+      const breakdown = Finance.npvBreakdown(r, flows);
+
+      document.getElementById('result-value').textContent = Finance.fmtMoney(npv);
+      document.getElementById('result-value').className = 'result-primary ' + (npv >= 0 ? 'success' : 'danger');
+
+      const details = document.getElementById('result-details');
+      while (details.firstChild) details.removeChild(details.firstChild);
+      addDetail(details, 'Discount rate', Finance.fmtPct(r));
+      addDetail(details, 'Periods', (flows.length - 1).toString());
+      addDetail(details, 'Sum of CFs', Finance.fmtMoney(flows.reduce((a, b) => a + b, 0)));
+
+      // Steps: PV breakdown
+      const steps = document.getElementById('steps-body');
+      while (steps.firstChild) steps.removeChild(steps.firstChild);
+
+      const formula = document.createElement('div');
+      formula.className = 'formula';
+      formula.textContent = 'NPV = sum of CF_t / (1+r)^t for t = 0..n';
+      steps.appendChild(formula);
+
+      breakdown.forEach(item => {
+        const p = document.createElement('p');
+        p.textContent = 'Period ' + item.period + ': CF = ' + Finance.fmtMoney(item.cf) +
+          ' -> PV = ' + Finance.fmtMoney(item.pv);
+        steps.appendChild(p);
+      });
+
+      const total = document.createElement('p');
+      total.style.fontWeight = '600';
+      total.textContent = 'NPV = ' + Finance.fmtMoney(npv);
+      steps.appendChild(total);
+
+      UI.showResult(document.getElementById('result-card'));
+
+      document.getElementById('btn-copy').onclick = () => UI.copyText('NPV: ' + Finance.fmtMoney(npv));
+      document.getElementById('btn-share').onclick = () => {
+        UI.copyText(UI.buildShareLink({
+          rate, basis: UI.getSel('rate-basis'),
+          cfs: JSON.stringify(cfTable.getFlows())
+        }));
+      };
+    }
+
+    function addDetail(container, label, value) {
+      const div = document.createElement('div');
+      div.className = 'result-detail';
+      const lbl = document.createElement('div');
+      lbl.className = 'detail-label';
+      lbl.textContent = label;
+      const val = document.createElement('div');
+      val.className = 'detail-value';
+      val.textContent = value;
+      div.appendChild(lbl);
+      div.appendChild(val);
+      container.appendChild(div);
+    }
+
+    document.getElementById('btn-solve').addEventListener('click', solve);
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      UI.setVal('rate', '');
+      document.getElementById('rate-basis').value = 'period';
+      cfTable.clear();
+      document.querySelectorAll('.result-card').forEach(el => el.classList.add('hidden'));
+    });
+    document.getElementById('btn-example').addEventListener('click', () => {
+      UI.setVal('rate', '10');
+      cfTable.setFlows([-10000, 3000, 4000, 4000, 3000]);
+    });
+  </script>
+</body>
+</html>

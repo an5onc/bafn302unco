@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bond Current Yield - Finance Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span>Finance</span> Toolkit</div>
+  </header>
+
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Bond Current Yield</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Bond details</div>
+
+      <div class="mode-switch" id="input-mode">
+        <button class="active" data-mode="coupon-payment">Annual coupon payment</button>
+        <button data-mode="coupon-rate">Coupon rate + face value</button>
+      </div>
+
+      <div class="input-grid">
+        <div class="field" id="field-annual-coupon">
+          <label>Annual Coupon Payment ($) <span class="tip" data-tip="Total annual coupon in dollars">?</span></label>
+          <input type="number" step="any" id="annual-coupon" placeholder="e.g. 60">
+        </div>
+        <div class="field" id="field-coupon-rate" style="display:none">
+          <label>Coupon Rate (%) <span class="tip" data-tip="Annual coupon rate">?</span></label>
+          <input type="number" step="any" id="coupon-rate" placeholder="e.g. 6">
+        </div>
+        <div class="field" id="field-face" style="display:none">
+          <label>Face Value <span class="tip" data-tip="Par value">?</span></label>
+          <input type="number" step="any" id="face" placeholder="1000" value="1000">
+        </div>
+        <div class="field">
+          <label>Current Market Price ($) <span class="tip" data-tip="Current bond price">?</span></label>
+          <input type="number" step="any" id="price" placeholder="e.g. 950">
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btn-solve">Calculate</button>
+      </div>
+    </div>
+
+    <div class="warnings" id="warnings"></div>
+
+    <div class="card result-card hidden" id="result-card">
+      <div class="card-title">Answer</div>
+      <div class="result-label">Current Yield</div>
+      <div class="result-primary" id="result-value"></div>
+      <div class="result-details" id="result-details"></div>
+      <button class="btn btn-outline" style="margin-top:.75rem" id="btn-copy">Copy result</button>
+      <button class="btn btn-outline" id="btn-share">Copy share link</button>
+      <button class="steps-toggle">Show steps</button>
+      <div class="steps-body" id="steps-body"></div>
+    </div>
+
+    <div class="card notes-card">
+      <p><strong>Current yield</strong> measures the annual coupon income relative to the bond's current price. It ignores capital gains/losses and time value of money, so it's simpler (but less complete) than YTM.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer"><p>For educational use only.</p></footer>
+
+  <script src="/js/finance.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    let inputMode = 'coupon-payment';
+
+    document.getElementById('input-mode').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      inputMode = btn.dataset.mode;
+      document.querySelectorAll('#input-mode button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('field-annual-coupon').style.display = inputMode === 'coupon-payment' ? '' : 'none';
+      document.getElementById('field-coupon-rate').style.display = inputMode === 'coupon-rate' ? '' : 'none';
+      document.getElementById('field-face').style.display = inputMode === 'coupon-rate' ? '' : 'none';
+    });
+
+    function solve() {
+      const warn = document.getElementById('warnings');
+      UI.clearWarnings(warn);
+
+      const price = UI.getNum('price');
+      if (isNaN(price) || price <= 0) {
+        UI.addWarning(warn, 'Enter a positive market price.', 'error');
+        return;
+      }
+
+      let annualCoupon;
+      if (inputMode === 'coupon-payment') {
+        annualCoupon = UI.getNum('annual-coupon');
+        if (isNaN(annualCoupon)) {
+          UI.addWarning(warn, 'Enter the annual coupon payment.', 'error');
+          return;
+        }
+      } else {
+        const rate = UI.getNum('coupon-rate');
+        const face = UI.getNum('face');
+        if (isNaN(rate) || isNaN(face)) {
+          UI.addWarning(warn, 'Enter coupon rate and face value.', 'error');
+          return;
+        }
+        annualCoupon = (rate / 100) * face;
+      }
+
+      const cy = Finance.currentYield(annualCoupon, price);
+      const cyPct = cy * 100;
+
+      document.getElementById('result-value').textContent = Finance.fmt(cyPct, 4) + '%';
+
+      const details = document.getElementById('result-details');
+      while (details.firstChild) details.removeChild(details.firstChild);
+      addDetail(details, 'Annual coupon', Finance.fmtMoney(annualCoupon));
+      addDetail(details, 'Price', Finance.fmtMoney(price));
+
+      // Steps
+      const steps = document.getElementById('steps-body');
+      while (steps.firstChild) steps.removeChild(steps.firstChild);
+
+      const formula = document.createElement('div');
+      formula.className = 'formula';
+      formula.textContent = 'Current Yield = Annual Coupon / Price';
+      steps.appendChild(formula);
+
+      const p = document.createElement('p');
+      p.textContent = 'Current Yield = ' + Finance.fmtMoney(annualCoupon) + ' / ' +
+        Finance.fmtMoney(price) + ' = ' + Finance.fmt(cyPct, 4) + '%';
+      steps.appendChild(p);
+
+      UI.showResult(document.getElementById('result-card'));
+
+      document.getElementById('btn-copy').onclick = () => UI.copyText('Current Yield: ' + Finance.fmt(cyPct, 4) + '%');
+      document.getElementById('btn-share').onclick = () => {
+        const params = { mode: inputMode, price };
+        if (inputMode === 'coupon-payment') params['annual-coupon'] = annualCoupon;
+        else { params['coupon-rate'] = UI.getNum('coupon-rate'); params.face = UI.getNum('face'); }
+        UI.copyText(UI.buildShareLink(params));
+      };
+    }
+
+    function addDetail(container, label, value) {
+      const div = document.createElement('div');
+      div.className = 'result-detail';
+      const lbl = document.createElement('div');
+      lbl.className = 'detail-label';
+      lbl.textContent = label;
+      const val = document.createElement('div');
+      val.className = 'detail-value';
+      val.textContent = value;
+      div.appendChild(lbl);
+      div.appendChild(val);
+      container.appendChild(div);
+    }
+
+    document.getElementById('btn-solve').addEventListener('click', solve);
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      UI.resetForm(['annual-coupon', 'coupon-rate', 'price']);
+      UI.setVal('face', '1000');
+    });
+    document.getElementById('btn-example').addEventListener('click', () => {
+      inputMode = 'coupon-payment';
+      document.querySelectorAll('#input-mode button').forEach(b => b.classList.remove('active'));
+      document.querySelector('#input-mode button[data-mode="coupon-payment"]').classList.add('active');
+      document.getElementById('field-annual-coupon').style.display = '';
+      document.getElementById('field-coupon-rate').style.display = 'none';
+      document.getElementById('field-face').style.display = 'none';
+      UI.setVal('annual-coupon', '60');
+      UI.setVal('price', '950');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = UI.getParams();
+      if (params.mode === 'coupon-rate') {
+        document.querySelector('#input-mode button[data-mode="coupon-rate"]').click();
+      }
+      UI.loadParams(['annual-coupon', 'coupon-rate', 'face', 'price']);
+    });
+  </script>
+</body>
+</html>

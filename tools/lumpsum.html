@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lump Sum PV/FV - Finance Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span>Finance</span> Toolkit</div>
+  </header>
+
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Lump Sum PV / FV</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">What you know</div>
+
+      <div class="mode-switch" id="mode-switch">
+        <button class="active" data-mode="fv">Compute FV from PV</button>
+        <button data-mode="pv">Compute PV from FV</button>
+      </div>
+
+      <div class="input-grid">
+        <div class="field" id="field-pv">
+          <label>Present Value (PV) <span class="tip" data-tip="The amount today">?</span></label>
+          <input type="number" step="any" id="pv" placeholder="e.g. 1000">
+        </div>
+        <div class="field" id="field-fv" style="display:none">
+          <label>Future Value (FV) <span class="tip" data-tip="The amount in the future">?</span></label>
+          <input type="number" step="any" id="fv" placeholder="e.g. 2158.92">
+        </div>
+        <div class="field">
+          <label>Annual Rate (%) <span class="tip" data-tip="Nominal annual rate (APR)">?</span></label>
+          <input type="number" step="any" id="rate" placeholder="e.g. 8">
+        </div>
+        <div class="field">
+          <label>Years <span class="tip" data-tip="Number of years">?</span></label>
+          <input type="number" step="any" id="years" placeholder="e.g. 10">
+        </div>
+        <div class="field">
+          <label>Compounding</label>
+          <select id="comp">
+            <option value="1">Annual</option>
+            <option value="2">Semiannual</option>
+            <option value="4">Quarterly</option>
+            <option value="12" selected>Monthly</option>
+            <option value="365">Daily</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btn-solve">Solve</button>
+      </div>
+    </div>
+
+    <div class="warnings" id="warnings"></div>
+
+    <div class="card result-card hidden" id="result-card">
+      <div class="card-title">Answer</div>
+      <div class="result-label" id="result-label"></div>
+      <div class="result-primary" id="result-value"></div>
+      <div class="result-details" id="result-details"></div>
+      <button class="btn btn-outline" style="margin-top:.75rem" id="btn-copy">Copy result</button>
+      <button class="btn btn-outline" id="btn-share">Copy share link</button>
+      <button class="steps-toggle">Show steps</button>
+      <div class="steps-body" id="steps-body"></div>
+    </div>
+  </main>
+
+  <footer class="site-footer"><p>For educational use only.</p></footer>
+
+  <script src="/js/finance.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    let mode = 'fv';
+
+    document.getElementById('mode-switch').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      mode = btn.dataset.mode;
+      document.querySelectorAll('#mode-switch button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('field-pv').style.display = mode === 'fv' ? '' : 'none';
+      document.getElementById('field-fv').style.display = mode === 'pv' ? '' : 'none';
+    });
+
+    function solve() {
+      const warn = document.getElementById('warnings');
+      UI.clearWarnings(warn);
+
+      const rate = UI.getNum('rate');
+      const years = UI.getNum('years');
+      const m = parseInt(UI.getSel('comp'));
+
+      if (isNaN(rate) || isNaN(years)) {
+        UI.addWarning(warn, 'Please fill in rate and years.', 'error');
+        return;
+      }
+
+      const r = (rate / 100) / m;
+      const n = years * m;
+      let result, label, resultStr;
+
+      if (mode === 'fv') {
+        const pv = UI.getNum('pv');
+        if (isNaN(pv)) { UI.addWarning(warn, 'Enter a present value.', 'error'); return; }
+        result = pv * Math.pow(1 + r, n);
+        label = 'Future Value (FV)';
+        resultStr = Finance.fmtMoney(result);
+      } else {
+        const fv = UI.getNum('fv');
+        if (isNaN(fv)) { UI.addWarning(warn, 'Enter a future value.', 'error'); return; }
+        result = fv / Math.pow(1 + r, n);
+        label = 'Present Value (PV)';
+        resultStr = Finance.fmtMoney(result);
+      }
+
+      document.getElementById('result-label').textContent = label;
+      document.getElementById('result-value').textContent = resultStr;
+
+      const details = document.getElementById('result-details');
+      while (details.firstChild) details.removeChild(details.firstChild);
+
+      const ear = Finance.aprToEar(rate / 100, m);
+      addDetail(details, 'Periodic rate', Finance.fmtPct(r));
+      addDetail(details, 'Total periods', n.toString());
+      addDetail(details, 'EAR', Finance.fmtPct(ear));
+
+      // Steps
+      const steps = document.getElementById('steps-body');
+      while (steps.firstChild) steps.removeChild(steps.firstChild);
+
+      const formula = document.createElement('div');
+      formula.className = 'formula';
+      formula.textContent = mode === 'fv'
+        ? 'FV = PV * (1 + r/m)^(m*t)'
+        : 'PV = FV / (1 + r/m)^(m*t)';
+      steps.appendChild(formula);
+
+      const p = document.createElement('p');
+      p.textContent = 'r = ' + Finance.fmtPct(rate / 100) + ', m = ' + m +
+        ', t = ' + years + ', periodic rate = ' + Finance.fmtPct(r) +
+        ', total periods = ' + n;
+      steps.appendChild(p);
+
+      const p2 = document.createElement('p');
+      p2.textContent = label + ' = ' + resultStr;
+      steps.appendChild(p2);
+
+      UI.showResult(document.getElementById('result-card'));
+
+      document.getElementById('btn-copy').onclick = () => UI.copyText(label + ': ' + resultStr);
+      document.getElementById('btn-share').onclick = () => {
+        const params = { mode, rate, years, comp: m };
+        if (mode === 'fv') params.pv = UI.getNum('pv');
+        else params.fv = UI.getNum('fv');
+        UI.copyText(UI.buildShareLink(params));
+      };
+    }
+
+    function addDetail(container, label, value) {
+      const div = document.createElement('div');
+      div.className = 'result-detail';
+      const lbl = document.createElement('div');
+      lbl.className = 'detail-label';
+      lbl.textContent = label;
+      const val = document.createElement('div');
+      val.className = 'detail-value';
+      val.textContent = value;
+      div.appendChild(lbl);
+      div.appendChild(val);
+      container.appendChild(div);
+    }
+
+    document.getElementById('btn-solve').addEventListener('click', solve);
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      UI.resetForm(['pv', 'fv', 'rate', 'years']);
+      document.getElementById('comp').value = '12';
+    });
+    document.getElementById('btn-example').addEventListener('click', () => {
+      // Switch to FV mode
+      mode = 'fv';
+      document.querySelectorAll('#mode-switch button').forEach(b => b.classList.remove('active'));
+      document.querySelector('#mode-switch button[data-mode="fv"]').classList.add('active');
+      document.getElementById('field-pv').style.display = '';
+      document.getElementById('field-fv').style.display = 'none';
+      UI.setVal('pv', '1000');
+      UI.setVal('rate', '8');
+      UI.setVal('years', '10');
+      document.getElementById('comp').value = '1';
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = UI.getParams();
+      if (params.mode === 'pv') {
+        document.querySelector('#mode-switch button[data-mode="pv"]').click();
+      }
+      UI.loadParams(['pv', 'fv', 'rate', 'years']);
+      if (params.comp) document.getElementById('comp').value = params.comp;
+    });
+  </script>
+</body>
+</html>

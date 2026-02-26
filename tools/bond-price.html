@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bond Price - Finance Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span>Finance</span> Toolkit</div>
+  </header>
+
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Bond Price Calculator</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Bond details</div>
+      <div class="input-grid">
+        <div class="field">
+          <label>Face Value <span class="tip" data-tip="Par value, typically $1,000">?</span></label>
+          <input type="number" step="any" id="face" placeholder="1000" value="1000">
+        </div>
+        <div class="field">
+          <label>Coupon Rate (%) <span class="tip" data-tip="Annual coupon rate">?</span></label>
+          <input type="number" step="any" id="coupon" placeholder="e.g. 6">
+        </div>
+        <div class="field">
+          <label>Years to Maturity <span class="tip" data-tip="Time until the bond matures">?</span></label>
+          <input type="number" step="any" id="years" placeholder="e.g. 10">
+        </div>
+        <div class="field">
+          <label>YTM / Required Return (%) <span class="tip" data-tip="Annual yield to maturity or required rate of return">?</span></label>
+          <input type="number" step="any" id="ytm" placeholder="e.g. 8">
+        </div>
+        <div class="field">
+          <label>Payments per year</label>
+          <select id="freq">
+            <option value="1">1 (Annual)</option>
+            <option value="2" selected>2 (Semiannual)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btn-solve">Calculate Price</button>
+      </div>
+    </div>
+
+    <div class="warnings" id="warnings"></div>
+
+    <div class="card result-card hidden" id="result-card">
+      <div class="card-title">Answer</div>
+      <div class="result-label">Bond Price</div>
+      <div class="result-primary" id="result-value"></div>
+      <div class="result-details" id="result-details"></div>
+      <button class="btn btn-outline" style="margin-top:.75rem" id="btn-copy">Copy result</button>
+      <button class="btn btn-outline" id="btn-share">Copy share link</button>
+      <button class="steps-toggle">Show steps</button>
+      <div class="steps-body" id="steps-body"></div>
+    </div>
+
+    <div class="card notes-card">
+      <p><strong>Premium:</strong> Price &gt; face value (coupon rate &gt; YTM). <strong>Discount:</strong> Price &lt; face value (coupon rate &lt; YTM). <strong>Par:</strong> Price = face value (coupon rate = YTM).</p>
+    </div>
+  </main>
+
+  <footer class="site-footer"><p>For educational use only.</p></footer>
+
+  <script src="/js/finance.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    function solve() {
+      const warn = document.getElementById('warnings');
+      UI.clearWarnings(warn);
+
+      const face = UI.getNum('face');
+      const coupon = UI.getNum('coupon');
+      const years = UI.getNum('years');
+      const ytm = UI.getNum('ytm');
+      const freq = parseInt(UI.getSel('freq'));
+
+      if ([face, coupon, years, ytm].some(v => isNaN(v))) {
+        UI.addWarning(warn, 'Please fill in all fields.', 'error');
+        return;
+      }
+      if (years <= 0) {
+        UI.addWarning(warn, 'Years to maturity must be positive.', 'error');
+        return;
+      }
+
+      const price = Finance.bondPrice(face, coupon / 100, ytm / 100, years, freq);
+      const couponPerPeriod = (coupon / 100 / freq) * face;
+      const n = years * freq;
+      const periodicRate = (ytm / 100) / freq;
+
+      let pdLabel;
+      if (Math.abs(price - face) < 0.01) pdLabel = 'At par';
+      else if (price > face) pdLabel = 'Premium';
+      else pdLabel = 'Discount';
+
+      document.getElementById('result-value').textContent = Finance.fmtMoney(price);
+
+      const details = document.getElementById('result-details');
+      while (details.firstChild) details.removeChild(details.firstChild);
+      addDetail(details, 'Coupon/period', Finance.fmtMoney(couponPerPeriod));
+      addDetail(details, 'Total periods', n.toString());
+      addDetail(details, 'Periodic rate', Finance.fmtPct(periodicRate));
+      addDetail(details, 'Status', pdLabel);
+
+      // Steps
+      const steps = document.getElementById('steps-body');
+      while (steps.firstChild) steps.removeChild(steps.firstChild);
+
+      const formula = document.createElement('div');
+      formula.className = 'formula';
+      formula.textContent = 'Price = C * [1 - (1+r)^(-n)] / r + FV / (1+r)^n';
+      steps.appendChild(formula);
+
+      const p1 = document.createElement('p');
+      p1.textContent = 'C = ' + Finance.fmtMoney(couponPerPeriod) + ', r = ' + Finance.fmtPct(periodicRate) +
+        ', n = ' + n + ', FV = ' + Finance.fmtMoney(face);
+      steps.appendChild(p1);
+
+      const pvCoupons = couponPerPeriod * (1 - Math.pow(1 + periodicRate, -n)) / periodicRate;
+      const pvFace = face / Math.pow(1 + periodicRate, n);
+      const p2 = document.createElement('p');
+      p2.textContent = 'PV of coupons = ' + Finance.fmtMoney(pvCoupons) + ', PV of face = ' + Finance.fmtMoney(pvFace);
+      steps.appendChild(p2);
+
+      const p3 = document.createElement('p');
+      p3.textContent = 'Bond price = ' + Finance.fmtMoney(price) + ' (' + pdLabel + ')';
+      steps.appendChild(p3);
+
+      UI.showResult(document.getElementById('result-card'));
+
+      document.getElementById('btn-copy').onclick = () => UI.copyText('Bond Price: ' + Finance.fmtMoney(price));
+      document.getElementById('btn-share').onclick = () => {
+        UI.copyText(UI.buildShareLink({ face, coupon, years, ytm, freq }));
+      };
+    }
+
+    function addDetail(container, label, value) {
+      const div = document.createElement('div');
+      div.className = 'result-detail';
+      const lbl = document.createElement('div');
+      lbl.className = 'detail-label';
+      lbl.textContent = label;
+      const val = document.createElement('div');
+      val.className = 'detail-value';
+      val.textContent = value;
+      div.appendChild(lbl);
+      div.appendChild(val);
+      container.appendChild(div);
+    }
+
+    document.getElementById('btn-solve').addEventListener('click', solve);
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      UI.resetForm(['coupon', 'years', 'ytm']);
+      UI.setVal('face', '1000');
+      document.getElementById('freq').value = '2';
+    });
+    document.getElementById('btn-example').addEventListener('click', () => {
+      UI.setVal('face', '1000');
+      UI.setVal('coupon', '6');
+      UI.setVal('years', '10');
+      UI.setVal('ytm', '8');
+      document.getElementById('freq').value = '2';
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      UI.loadParams(['face', 'coupon', 'years', 'ytm']);
+      const params = UI.getParams();
+      if (params.freq) document.getElementById('freq').value = params.freq;
+    });
+  </script>
+</body>
+</html>

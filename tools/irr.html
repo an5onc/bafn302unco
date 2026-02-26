@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>IRR Calculator - Finance Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span>Finance</span> Toolkit</div>
+  </header>
+
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>IRR Calculator</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Cash flows</div>
+      <div id="cf-container"></div>
+    </div>
+
+    <!-- Advanced -->
+    <div class="card">
+      <button class="advanced-toggle">
+        <span class="arrow">&#9654;</span> Advanced options
+      </button>
+      <div class="advanced-body">
+        <div class="input-grid" style="margin-top:.5rem">
+          <div class="field">
+            <label>Initial guess (%) <span class="tip" data-tip="Starting guess for Newton's method">?</span></label>
+            <input type="number" step="any" id="guess" placeholder="10" value="10">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-group" style="margin-bottom:1rem">
+      <button class="btn btn-primary" id="btn-solve">Calculate IRR</button>
+    </div>
+
+    <div class="warnings" id="warnings"></div>
+
+    <div class="card result-card hidden" id="result-card">
+      <div class="card-title">Answer</div>
+      <div class="result-label">Internal Rate of Return (IRR)</div>
+      <div class="result-primary" id="result-value"></div>
+      <div class="result-details" id="result-details"></div>
+      <button class="btn btn-outline" style="margin-top:.75rem" id="btn-copy">Copy result</button>
+      <button class="btn btn-outline" id="btn-share">Copy share link</button>
+      <button class="steps-toggle">Show steps</button>
+      <div class="steps-body" id="steps-body"></div>
+    </div>
+
+    <div class="card notes-card">
+      <p><strong>IRR:</strong> The discount rate that makes NPV = 0. If IRR exceeds your required return, the project adds value. Cash flows with multiple sign changes may have multiple IRRs.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer"><p>For educational use only.</p></footer>
+
+  <script src="/js/finance.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    let cfTable;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      cfTable = UI.createCFTable('cf-container', 6);
+
+      const params = UI.getParams();
+      if (params.guess) UI.setVal('guess', params.guess);
+      if (params.cfs) {
+        try {
+          cfTable.setFlows(JSON.parse(params.cfs));
+        } catch (e) { /* ignore */ }
+      }
+    });
+
+    function solve() {
+      const warn = document.getElementById('warnings');
+      UI.clearWarnings(warn);
+
+      const flows = cfTable.getFlows();
+      if (flows.length < 2) {
+        UI.addWarning(warn, 'Need at least 2 cash flows.', 'error');
+        return;
+      }
+
+      // Check sign changes
+      const signChanges = Finance.signChanges(flows);
+      if (signChanges === 0) {
+        UI.addWarning(warn, 'No sign changes in cash flows. IRR requires at least one sign change (e.g., investment then returns).', 'error');
+        return;
+      }
+      if (signChanges > 1) {
+        UI.addWarning(warn, 'Multiple sign changes detected (' + signChanges + '). There may be multiple IRRs. The result shown is one solution.', 'warn');
+      }
+
+      const guess = (UI.getNum('guess') || 10) / 100;
+      const irr = Finance.irr(flows, guess);
+
+      if (isNaN(irr) || !isFinite(irr)) {
+        UI.addWarning(warn, 'Could not find an IRR. Try a different initial guess or check your cash flows.', 'error');
+        return;
+      }
+
+      const irrPct = irr * 100;
+      document.getElementById('result-value').textContent = Finance.fmt(irrPct, 4) + '%';
+      document.getElementById('result-value').className = 'result-primary ' + (irr >= 0 ? 'success' : 'danger');
+
+      const details = document.getElementById('result-details');
+      while (details.firstChild) details.removeChild(details.firstChild);
+
+      const npvAtIrr = Finance.npv(irr, flows);
+      addDetail(details, 'NPV at IRR', Finance.fmtMoney(npvAtIrr));
+      addDetail(details, 'Sign changes', signChanges.toString());
+      addDetail(details, 'Periods', (flows.length - 1).toString());
+
+      // Steps
+      const steps = document.getElementById('steps-body');
+      while (steps.firstChild) steps.removeChild(steps.firstChild);
+
+      const p1 = document.createElement('p');
+      p1.textContent = 'IRR is the rate r where NPV = 0:';
+      steps.appendChild(p1);
+
+      const formula = document.createElement('div');
+      formula.className = 'formula';
+      formula.textContent = 'sum of CF_t / (1+r)^t = 0';
+      steps.appendChild(formula);
+
+      const p2 = document.createElement('p');
+      p2.textContent = 'Solved using Newton-Raphson iteration with initial guess = ' +
+        Finance.fmt(guess * 100, 2) + '%.';
+      steps.appendChild(p2);
+
+      const p3 = document.createElement('p');
+      p3.textContent = 'IRR = ' + Finance.fmt(irrPct, 4) + '% per period.';
+      steps.appendChild(p3);
+
+      const p4 = document.createElement('p');
+      p4.textContent = 'Sanity check: NPV at IRR = ' + Finance.fmtMoney(npvAtIrr) + ' (should be near $0.00).';
+      steps.appendChild(p4);
+
+      UI.showResult(document.getElementById('result-card'));
+
+      document.getElementById('btn-copy').onclick = () => UI.copyText('IRR: ' + Finance.fmt(irrPct, 4) + '%');
+      document.getElementById('btn-share').onclick = () => {
+        UI.copyText(UI.buildShareLink({
+          guess: UI.getNum('guess') || 10,
+          cfs: JSON.stringify(cfTable.getFlows())
+        }));
+      };
+    }
+
+    function addDetail(container, label, value) {
+      const div = document.createElement('div');
+      div.className = 'result-detail';
+      const lbl = document.createElement('div');
+      lbl.className = 'detail-label';
+      lbl.textContent = label;
+      const val = document.createElement('div');
+      val.className = 'detail-value';
+      val.textContent = value;
+      div.appendChild(lbl);
+      div.appendChild(val);
+      container.appendChild(div);
+    }
+
+    document.getElementById('btn-solve').addEventListener('click', solve);
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      UI.setVal('guess', '10');
+      cfTable.clear();
+      document.querySelectorAll('.result-card').forEach(el => el.classList.add('hidden'));
+    });
+    document.getElementById('btn-example').addEventListener('click', () => {
+      UI.setVal('guess', '10');
+      cfTable.setFlows([-10000, 3000, 4000, 4000, 3000]);
+    });
+  </script>
+</body>
+</html>
