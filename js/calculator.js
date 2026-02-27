@@ -931,7 +931,10 @@ class HP10bII {
   // ===== DISPLAY =====
 
   updateDisplay() {
-    if (this.lcdEl) this.lcdEl.textContent = this.display;
+    // Cache display value to avoid repeated string operations
+    if (this.lcdEl && this.lcdEl.textContent !== this.display) {
+      this.lcdEl.textContent = this.display;
+    }
     this._updateAnn('BEGIN', this.isBegin);
     this._updateAnn('INPUT', this.cfMode);
     this._updateAllRegs();
@@ -940,7 +943,10 @@ class HP10bII {
   _updateAnn(name, active) {
     const el = this.annEls[name];
     if (!el) return;
-    el.classList.toggle('active', !!active);
+    const isActive = !!active;
+    if (el.classList.contains('active') !== isActive) {
+      el.classList.toggle('active', isActive);
+    }
   }
 
   _updateShiftVisuals() {
@@ -950,10 +956,15 @@ class HP10bII {
   }
 
   _updateAllRegs() {
+    // Batch DOM operations
+    const fragment = document.createDocumentFragment();
     Object.entries(this.registers).forEach(([name, val]) => {
       const el = this.regEls[name];
       if (!el) return;
-      el.textContent = this._regLabel(name) + ': ' + (val === null ? '--' : this._fmtShort(val));
+      const newText = this._regLabel(name) + ': ' + (val === null ? '--' : this._fmtShort(val));
+      if (el.textContent !== newText) {
+        el.textContent = newText;
+      }
     });
   }
 

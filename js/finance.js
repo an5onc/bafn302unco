@@ -88,8 +88,11 @@ const Finance = {
   npv(rate, cashFlows) {
     // cashFlows[0] = CF at time 0, cashFlows[1] = CF at time 1, etc.
     let npv = 0;
+    let discount = 1;
+    const factor = 1 + rate;
     for (let t = 0; t < cashFlows.length; t++) {
-      npv += cashFlows[t] / Math.pow(1 + rate, t);
+      npv += cashFlows[t] / discount;
+      discount *= factor;
     }
     return npv;
   },

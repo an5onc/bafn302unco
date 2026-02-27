@@ -159,7 +159,6 @@ a:hover{text-decoration:underline}
   width:10px;height:10px;border-radius:50%;
   background:var(--card-accent,var(--accent));
   flex-shrink:0;
-  box-shadow:0 0 0 3px color-mix(in srgb,var(--card-accent,var(--accent)) 15%,transparent);
 }
 .section-header h2{
   font-size:.78rem;font-weight:700;color:var(--text-secondary);
@@ -215,12 +214,6 @@ a:hover{text-decoration:underline}
 .cat-rates { --card-accent: var(--cat-rates) }
 .cat-bonds { --card-accent: var(--cat-bonds) }
 
-/* Section icon backgrounds */
-.cat-tvm   .section-icon { background:rgba(59,130,246,.12);color:var(--cat-tvm) }
-.cat-cf    .section-icon { background:rgba(16,185,129,.12);color:var(--cat-cf) }
-.cat-rates .section-icon { background:rgba(245,158,11,.12);color:var(--cat-rates) }
-.cat-bonds .section-icon { background:rgba(139,92,246,.12);color:var(--cat-bonds) }
-
 /* ===== Tool Page Layout ===== */
 .tool-topbar{
   display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem;
@@ -234,13 +227,13 @@ a:hover{text-decoration:underline}
   font-size:1.35rem;font-weight:800;flex:1;
   letter-spacing:-.02em;color:var(--navy);
 }
-.tool-topbar .btn-sm{
+.btn-sm{
   padding:.375rem .75rem;border-radius:var(--radius);font-size:.8125rem;
   font-weight:500;border:1px solid var(--border);background:var(--surface);
   color:var(--text-secondary);cursor:pointer;transition:all .15s;
   font-family:var(--font);
 }
-.tool-topbar .btn-sm:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
 
 /* ===== Cards ===== */
 .card{

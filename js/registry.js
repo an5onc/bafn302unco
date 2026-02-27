@@ -22,6 +22,13 @@ const TOOL_REGISTRY = [
     path: '/tools/annuity.html'
   },
   {
+    id: 'amortization',
+    title: 'Amortization Schedule',
+    description: 'Generate full loan amortization table with payment breakdown and summary.',
+    category: 'Time Value of Money',
+    path: '/tools/amortization.html'
+  },
+  {
     id: 'npv',
     title: 'NPV Calculator',
     description: 'Net present value of uneven cash flows at a given discount rate.',
