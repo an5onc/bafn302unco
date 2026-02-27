@@ -94,7 +94,6 @@
 
         const icon = document.createElement('div');
         icon.className = 'section-icon';
-        icon.textContent = meta.icon;
 
         const h2 = document.createElement('h2');
         h2.textContent = cat;
@@ -111,9 +110,9 @@
           card.className = 'tool-card ' + meta.cls;
           card.addEventListener('click', () => { window.location.href = tool.path; });
 
-          const iconEl = document.createElement('div');
-          iconEl.className = 'tool-card-icon';
-          iconEl.textContent = meta.icon;
+          const tag = document.createElement('div');
+          tag.className = 'tool-card-tag';
+          tag.textContent = cat;
 
           const h3 = document.createElement('h3');
           h3.textContent = tool.title;
@@ -125,7 +124,7 @@
           btn.className = 'open-btn';
           btn.textContent = 'Open Tool →';
 
-          card.appendChild(iconEl);
+          card.appendChild(tag);
           card.appendChild(h3);
           card.appendChild(p);
           card.appendChild(btn);
