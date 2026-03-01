@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Realized Rate of Return - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/calculator.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div>
+  </header>
+
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Realized Rate of Return</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="tool-insight">
+      <div class="insight-why">
+        <span class="insight-icon">💡</span>
+        <div>
+          <strong>Why This Matters</strong>
+          <p>YTM assumes you reinvest every coupon payment at the YTM rate. In reality, that almost never happens — reinvestment rates change constantly. The Realized Rate of Return uses the ACTUAL reinvestment rate you expect to earn on those coupons, plus the actual price you sell the bond for, to show what you TRULY earned over your holding period. It's the most accurate measure of actual bond performance.</p>
+        </div>
+      </div>
+      <div class="insight-vars">
+        <div class="insight-var-title">What each input means:</div>
+        <ul>
+          <li><strong>Purchase Price</strong> — What you paid for the bond when you bought it</li>
+          <li><strong>Face Value</strong> — Par value of the bond ($1,000 typical)</li>
+          <li><strong>Annual Coupon Rate</strong> — The interest rate printed on the bond, applied to face value</li>
+          <li><strong>Payments per Year</strong> — How often coupons are paid (2 = semiannual is most common)</li>
+          <li><strong>Reinvestment Rate</strong> — The annual rate at which you actually reinvest the coupon payments (this is what makes RRR differ from YTM)</li>
+          <li><strong>Holding Period</strong> — How many years you plan to hold the bond before selling</li>
+          <li><strong>Selling Price</strong> — The price you sell the bond for at the end of the holding period</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" id="normal-mode-card">
+      <div class="card-title">Bond details</div>
+      <div class="input-grid">
+        <div class="field">
+          <label>Purchase Price <span class="tip" data-tip="What you paid for the bond">?</span></label>
+          <input type="number" step="any" id="purchase" placeholder="e.g. 950">
+        </div>
+        <div class="field">
+          <label>Face Value <span class="tip" data-tip="Par value, typically $1,000">?</span></label>
+          <input type="number" step="any" id="face" placeholder="1000" value="1000">
+        </div>
+        <div class="field">
+          <label>Annual Coupon Rate (%) <span class="tip" data-tip="Annual coupon rate printed on the bond">?</span></label>
+          <input type="number" step="any" id="coupon" placeholder="e.g. 6">
+        </div>
+        <div class="field">
+          <label>Payments per Year</label>
+          <select id="freq">
+            <option value="1">1 (Annual)</option>
+            <option value="2" selected>2 (Semiannual)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Reinvestment Rate (% annual) <span class="tip" data-tip="Rate at which coupon payments are reinvested">?</span></label>
+          <input type="number" step="any" id="reinvest" placeholder="e.g. 4">
+        </div>
+        <div class="field">
+          <label>Holding Period (years) <span class="tip" data-tip="Number of years you hold the bond before selling">?</span></label>
+          <input type="number" step="any" id="holding" placeholder="e.g. 5">
+        </div>
+        <div class="field">
+          <label>Selling Price <span class="tip" data-tip="Price you sell the bond for at the end of the holding period">?</span></label>
+          <input type="number" step="any" id="selling" placeholder="e.g. 980">
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btn-solve">Calculate RRR</button>
+      </div>
+    </div>
+
+    <div class="warnings" id="warnings"></div>
+
+    <div class="card result-card hidden" id="result-card">
+      <div class="card-title">Answer</div>
+      <div class="result-label">Realized Rate of Return (RRR)</div>
+      <div class="result-primary" id="result-value"></div>
+      <div class="result-details" id="result-details"></div>
+      <button class="btn btn-outline" style="margin-top:.75rem" id="btn-copy">Copy result</button>
+      <button class="btn btn-outline" id="btn-share">Copy share link</button>
+      <button class="steps-toggle">Show steps</button>
+      <div class="steps-body" id="steps-body"></div>
+    </div>
+  </main>
+
+  <footer class="site-footer"><p>For educational use only.</p></footer>
+
+  <script src="/js/finance.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    function solve() {
+      const warn = document.getElementById('warnings');
+      UI.clearWarnings(warn);
+
+      const purchase = UI.getNum('purchase');
+      const face = UI.getNum('face');
+      const coupon = UI.getNum('coupon');
+      const freq = parseInt(UI.getSel('freq'));
+      const reinvest = UI.getNum('reinvest');
+      const holding = UI.getNum('holding');
+      const selling = UI.getNum('selling');
+
+      if ([purchase, face, coupon, reinvest, holding, selling].some(v => isNaN(v))) {
+        UI.addWarning(warn, 'Please fill in all fields.', 'error');
+        return;
+      }
+      if (purchase <= 0) { UI.addWarning(warn, 'Purchase price must be positive.', 'error'); return; }
+      if (holding <= 0) { UI.addWarning(warn, 'Holding period must be positive.', 'error'); return; }
+
+      const couponPerPeriod = (coupon / 100) * face / freq;
+      const rPeriodic = (reinvest / 100) / freq;
+      const nPeriods = holding * freq;
+
+      // FV of reinvested coupons
+      let fvCoupons;
+      if (rPeriodic === 0) {
+        fvCoupons = couponPerPeriod * nPeriods;
+      } else {
+        fvCoupons = couponPerPeriod * ((Math.pow(1 + rPeriodic, nPeriods) - 1) / rPeriodic);
+      }
+
+      const totalFV = fvCoupons + selling;
+      const rrr = Math.pow(totalFV / purchase, 1 / holding) - 1;
+
+      if (isNaN(rrr) || !isFinite(rrr)) {
+        UI.addWarning(warn, 'Could not calculate RRR. Check inputs.', 'error');
+        return;
+      }
+
+      document.getElementById('result-value').textContent = Finance.fmt(rrr * 100, 4) + '%';
+
+      const details = document.getElementById('result-details');
+      while (details.firstChild) details.removeChild(details.firstChild);
+      addDetail(details, 'Coupon per period', Finance.fmtMoney(couponPerPeriod));
+      addDetail(details, 'Total periods', nPeriods.toString());
+      addDetail(details, 'FV of reinvested coupons', Finance.fmtMoney(fvCoupons));
+      addDetail(details, 'Selling price', Finance.fmtMoney(selling));
+      addDetail(details, 'Total FV', Finance.fmtMoney(totalFV));
+
+      // Steps
+      const steps = document.getElementById('steps-body');
+      while (steps.firstChild) steps.removeChild(steps.firstChild);
+
+      const items = [
+        ['Step 1: Coupon per period', `= (${coupon}% × $${face}) / ${freq} = ${Finance.fmtMoney(couponPerPeriod)}`],
+        ['Step 2: Periodic reinvestment rate', `= ${reinvest}% / ${freq} = ${Finance.fmt(rPeriodic * 100, 4)}%`],
+        ['Step 3: Total periods', `= ${holding} years × ${freq} = ${nPeriods}`],
+        ['Step 4: FV of reinvested coupons', `= ${Finance.fmtMoney(couponPerPeriod)} × [(1 + ${Finance.fmt(rPeriodic * 100, 4)}%)^${nPeriods} − 1] / ${Finance.fmt(rPeriodic * 100, 4)}% = ${Finance.fmtMoney(fvCoupons)}`],
+        ['Step 5: Total FV', `= ${Finance.fmtMoney(fvCoupons)} + ${Finance.fmtMoney(selling)} = ${Finance.fmtMoney(totalFV)}`],
+        ['Step 6: RRR (annualized)', `= (${Finance.fmtMoney(totalFV)} / ${Finance.fmtMoney(purchase)})^(1/${holding}) − 1 = ${Finance.fmt(rrr * 100, 4)}%`],
+      ];
+
+      items.forEach(([label, val]) => {
+        const div = document.createElement('div');
+        div.className = 'formula';
+        div.innerHTML = `<strong>${label}:</strong><br>${val}`;
+        div.style.marginBottom = '0.5rem';
+        steps.appendChild(div);
+      });
+
+      UI.showResult(document.getElementById('result-card'));
+
+      document.getElementById('btn-copy').onclick = () => UI.copyText('RRR: ' + Finance.fmt(rrr * 100, 4) + '%');
+      document.getElementById('btn-share').onclick = () => {
+        UI.copyText(UI.buildShareLink({ purchase, face, coupon, freq, reinvest, holding, selling }));
+      };
+    }
+
+    function addDetail(container, label, value) {
+      const div = document.createElement('div');
+      div.className = 'result-detail';
+      const lbl = document.createElement('div');
+      lbl.className = 'detail-label';
+      lbl.textContent = label;
+      const val = document.createElement('div');
+      val.className = 'detail-value';
+      val.textContent = value;
+      div.appendChild(lbl);
+      div.appendChild(val);
+      container.appendChild(div);
+    }
+
+    document.getElementById('btn-solve').addEventListener('click', solve);
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      UI.resetForm(['purchase', 'coupon', 'reinvest', 'holding', 'selling']);
+      UI.setVal('face', '1000');
+      document.getElementById('freq').value = '2';
+      UI.hideResult(document.getElementById('result-card'));
+    });
+    document.getElementById('btn-example').addEventListener('click', () => {
+      UI.setVal('purchase', '950');
+      UI.setVal('face', '1000');
+      UI.setVal('coupon', '6');
+      document.getElementById('freq').value = '2';
+      UI.setVal('reinvest', '4');
+      UI.setVal('holding', '5');
+      UI.setVal('selling', '980');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      UI.loadParams(['purchase', 'face', 'coupon', 'reinvest', 'holding', 'selling']);
+      const params = UI.getParams();
+      if (params.freq) document.getElementById('freq').value = params.freq;
+    });
+  </script>
+</body>
+</html>

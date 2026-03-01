@@ -76,5 +76,12 @@ const TOOL_REGISTRY = [
     description: 'Annual coupon payment divided by current market price.',
     category: 'Bonds',
     path: '/tools/bond-current-yield.html'
+  },
+  {
+    id: 'rrr',
+    title: 'Realized Rate of Return',
+    description: 'Actual return on a bond over a holding period using real reinvestment rates and selling price.',
+    category: 'Bonds',
+    path: '/tools/rrr.html'
   }
 ];
