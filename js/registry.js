@@ -83,5 +83,70 @@ const TOOL_REGISTRY = [
     description: 'Actual return on a bond over a holding period using real reinvestment rates and selling price.',
     category: 'Bonds',
     path: '/tools/rrr.html'
+  },
+
+  // ── Chapter 8: Risk & Return ─────────────────────────────
+  {
+    id: 'expected-return',
+    title: 'Expected Return',
+    description: 'Probability-weighted expected return from scenarios. r̄ = Σ(pᵢ × rᵢ)',
+    category: 'Risk & Return (Ch. 8)',
+    path: '/tools/risk/expected-return.html'
+  },
+  {
+    id: 'std-dev',
+    title: 'Standard Deviation',
+    description: 'Probability mode or historical returns mode. Compare two assets side-by-side.',
+    category: 'Risk & Return (Ch. 8)',
+    path: '/tools/risk/std-dev.html'
+  },
+  {
+    id: 'cv',
+    title: 'Coefficient of Variation',
+    description: 'CV = σ / r̄. Risk per unit of return. Compare A vs B.',
+    category: 'Risk & Return (Ch. 8)',
+    path: '/tools/risk/cv.html'
+  },
+  {
+    id: 'sharpe',
+    title: 'Sharpe Ratio',
+    description: 'Risk-adjusted return above the risk-free rate. Compare A vs B.',
+    category: 'Risk & Return (Ch. 8)',
+    path: '/tools/risk/sharpe.html'
+  },
+  {
+    id: 'portfolio-return',
+    title: 'Portfolio Return',
+    description: 'Weighted average return across portfolio holdings. rₚ = Σ(wᵢ × rᵢ)',
+    category: 'Risk & Return (Ch. 8)',
+    path: '/tools/risk/portfolio-return.html'
+  },
+  {
+    id: 'portfolio-risk',
+    title: 'Two-Asset Portfolio Risk',
+    description: 'Portfolio σ with correlation slider (ρ). Diversification benefit visualized.',
+    category: 'Risk & Return (Ch. 8)',
+    path: '/tools/risk/portfolio-risk.html'
+  },
+  {
+    id: 'beta',
+    title: 'Beta Calculator',
+    description: 'Direct β input or Cov/Var mode. Market interpretation included.',
+    category: 'Risk & Return (Ch. 8)',
+    path: '/tools/risk/beta.html'
+  },
+  {
+    id: 'portfolio-beta',
+    title: 'Portfolio Beta',
+    description: 'Weighted average beta across holdings. βₚ = Σ(wᵢ × βᵢ)',
+    category: 'Risk & Return (Ch. 8)',
+    path: '/tools/risk/portfolio-beta.html'
+  },
+  {
+    id: 'capm',
+    title: 'CAPM Required Return',
+    description: 'rᵢ = rf + β(rₘ − rf). Enter rₘ or MRP. Exam mode supported.',
+    category: 'Risk & Return (Ch. 8)',
+    path: '/tools/risk/capm.html'
   }
 ];

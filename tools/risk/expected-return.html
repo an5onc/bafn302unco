@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Expected Return - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div>
+  </header>
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Expected Return</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="tool-insight">
+      <div class="insight-why">
+        <span class="insight-icon">💡</span>
+        <div>
+          <strong>Why This Matters</strong>
+          <p>Expected return is the probability-weighted average of all possible returns. It tells you what you <em>expect</em> to earn on average, accounting for uncertainty in each outcome.</p>
+        </div>
+      </div>
+      <div class="insight-vars">
+        <div class="insight-var-title">Formula:</div>
+        <ul>
+          <li><strong>r̄ = Σ (pᵢ × rᵢ)</strong></li>
+          <li><strong>pᵢ</strong> — probability of scenario i (must sum to 1)</li>
+          <li><strong>rᵢ</strong> — return in scenario i (enter as % e.g. 12 for 12%)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Exam Mode Toggle -->
+    <div class="mode-switch" id="exam-toggle" style="margin-bottom:1rem">
+      <button class="active" data-mode="normal">Normal Mode</button>
+      <button data-mode="exam">Exam Mode</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Probability Scenarios</div>
+      <div id="prob-warn" class="warn-box hidden"></div>
+      <table class="data-table" id="scenarios-table">
+        <thead><tr><th>Scenario</th><th>Probability (0–1)</th><th>Return (%)</th><th></th></tr></thead>
+        <tbody id="scenarios-body"></tbody>
+      </table>
+      <button class="btn-sm" id="btn-add-row" style="margin-top:.5rem">+ Add Scenario</button>
+
+      <div class="advanced-section exam-hide">
+        <button class="advanced-toggle">&#9656; Advanced Options</button>
+        <div class="advanced-content hidden">
+          <div class="field">
+            <label>Decimal Precision</label>
+            <input type="number" id="decimals" value="2" min="0" max="6" style="width:80px">
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btn-solve" style="margin-top:1rem">Calculate Expected Return</button>
+    </div>
+
+    <div class="card hidden" id="result-card">
+      <div class="card-title">Result</div>
+      <div class="result-primary" id="result-main"></div>
+      <div class="result-details" id="result-details"></div>
+      <button class="advanced-toggle" id="btn-steps" style="margin-top:1rem">&#9656; Show Steps</button>
+      <div id="steps-content" class="hidden" style="margin-top:.75rem"></div>
+      <div style="margin-top:1rem">
+        <button class="btn-sm" id="btn-share">&#128279; Copy Share Link</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/components.js"></script>
+  <script src="/js/risk.js"></script>
+  <script>
+    // ── Row management ──────────────────────────────────────
+    let rowCount = 0;
+    function addRow(prob = '', ret = '') {
+      rowCount++;
+      const tbody = document.getElementById('scenarios-body');
+      const tr = document.createElement('tr');
+      tr.dataset.row = rowCount;
+      tr.innerHTML = `
+        <td>Scenario ${rowCount}</td>
+        <td><input type="number" step="any" min="0" max="1" class="prob-input" placeholder="e.g. 0.30" value="${prob}"></td>
+        <td><input type="number" step="any" class="ret-input" placeholder="e.g. 12" value="${ret}"></td>
+        <td><button class="btn-sm btn-danger" onclick="removeRow(this)">✕</button></td>`;
+      tbody.appendChild(tr);
+    }
+
+    function removeRow(btn) {
+      btn.closest('tr').remove();
+    }
+
+    function getScenarios() {
+      const rows = document.querySelectorAll('#scenarios-body tr');
+      return Array.from(rows).map(tr => ({
+        prob: parseFloat(tr.querySelector('.prob-input').value) || 0,
+        ret: (parseFloat(tr.querySelector('.ret-input').value) || 0) / 100
+      }));
+    }
+
+    // ── Solve ───────────────────────────────────────────────
+    function solve() {
+      const scenarios = getScenarios().filter(s => s.prob > 0);
+      if (scenarios.length < 1) { UI.showError('Add at least one scenario.'); return; }
+
+      const sumP = Risk.sumProbs(scenarios);
+      const warn = document.getElementById('prob-warn');
+      if (Math.abs(sumP - 1) > 0.001) {
+        warn.classList.remove('hidden');
+        warn.innerHTML = `⚠️ Probabilities sum to ${sumP.toFixed(4)}, not 1.000. 
+          <button class="btn-sm" onclick="normalize()">Normalize</button>`;
+      } else {
+        warn.classList.add('hidden');
+      }
+
+      const dec = parseInt(document.getElementById('decimals').value) || 2;
+      const result = Risk.stdDevProb(scenarios);
+      const er = result.mean;
+
+      document.getElementById('result-card').classList.remove('hidden');
+      document.getElementById('result-main').innerHTML =
+        `Expected Return: <strong>${(er * 100).toFixed(dec)}%</strong>`;
+
+      const details = document.getElementById('result-details');
+      details.innerHTML = '';
+      scenarios.forEach((s, i) => {
+        const contrib = s.prob * s.ret;
+        addDetail(details, `Scenario ${i+1}`, `${(s.prob*100).toFixed(1)}% × ${(s.ret*100).toFixed(dec)}% = ${(contrib*100).toFixed(dec+1)}%`);
+      });
+      addDetail(details, 'Sum', `r̄ = ${(er * 100).toFixed(dec)}%`);
+
+      // Steps
+      document.getElementById('steps-content').innerHTML = buildSteps(scenarios, er, dec);
+    }
+
+    function buildSteps(scenarios, er, dec) {
+      let s = `<div class="steps-box">
+        <p><strong>Formula:</strong> r̄ = Σ (pᵢ × rᵢ)</p>
+        <p><strong>Calculation:</strong></p><ul>`;
+      scenarios.forEach((sc, i) => {
+        s += `<li>p${i+1} × r${i+1} = ${(sc.prob).toFixed(4)} × ${(sc.ret*100).toFixed(dec)}% = ${(sc.prob*sc.ret*100).toFixed(dec+1)}%</li>`;
+      });
+      s += `</ul><p><strong>r̄ = ${(er*100).toFixed(dec)}%</strong></p>
+        <p>💡 This means: if these scenarios repeat many times, the average return will converge to ${(er*100).toFixed(dec)}%.</p>
+      </div>`;
+      return s;
+    }
+
+    function addDetail(container, label, value) {
+      const div = document.createElement('div');
+      div.className = 'detail-item';
+      div.innerHTML = `<div class="detail-label">${label}</div><div class="detail-value">${value}</div>`;
+      container.appendChild(div);
+    }
+
+    function normalize() {
+      const rows = document.querySelectorAll('#scenarios-body tr');
+      const probs = Array.from(rows).map(tr => parseFloat(tr.querySelector('.prob-input').value) || 0);
+      const total = probs.reduce((a, b) => a + b, 0);
+      rows.forEach((tr, i) => {
+        tr.querySelector('.prob-input').value = (probs[i] / total).toFixed(4);
+      });
+      document.getElementById('prob-warn').classList.add('hidden');
+    }
+
+    // ── Share ───────────────────────────────────────────────
+    function buildShareUrl() {
+      const rows = document.querySelectorAll('#scenarios-body tr');
+      const params = new URLSearchParams();
+      rows.forEach((tr, i) => {
+        params.set(`p${i}`, tr.querySelector('.prob-input').value);
+        params.set(`r${i}`, tr.querySelector('.ret-input').value);
+      });
+      params.set('n', rows.length);
+      return location.origin + location.pathname + '?' + params.toString();
+    }
+
+    function loadFromParams() {
+      const params = new URLSearchParams(location.search);
+      const n = parseInt(params.get('n')) || 0;
+      if (n > 0) {
+        document.getElementById('scenarios-body').innerHTML = '';
+        rowCount = 0;
+        for (let i = 0; i < n; i++) addRow(params.get(`p${i}`) || '', params.get(`r${i}`) || '');
+      }
+    }
+
+    // ── Exam mode ───────────────────────────────────────────
+    document.getElementById('exam-toggle').addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      document.querySelectorAll('#exam-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const isExam = btn.dataset.mode === 'exam';
+      document.querySelectorAll('.exam-hide').forEach(el => el.style.display = isExam ? 'none' : '');
+    });
+
+    // ── Wire up ─────────────────────────────────────────────
+    document.getElementById('btn-solve').addEventListener('click', solve);
+    document.getElementById('btn-add-row').addEventListener('click', () => addRow());
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      document.getElementById('scenarios-body').innerHTML = '';
+      rowCount = 0;
+      addRow(); addRow(); addRow();
+      document.getElementById('result-card').classList.add('hidden');
+      document.getElementById('prob-warn').classList.add('hidden');
+    });
+    document.getElementById('btn-example').addEventListener('click', () => {
+      document.getElementById('scenarios-body').innerHTML = '';
+      rowCount = 0;
+      addRow('0.25', '5'); addRow('0.50', '15'); addRow('0.25', '25');
+    });
+    document.getElementById('btn-steps').addEventListener('click', function() {
+      const c = document.getElementById('steps-content');
+      c.classList.toggle('hidden');
+      this.textContent = c.classList.contains('hidden') ? '▶ Show Steps' : '▼ Hide Steps';
+    });
+    document.getElementById('btn-share').addEventListener('click', () => {
+      navigator.clipboard.writeText(buildShareUrl()).then(() => alert('Link copied!'));
+    });
+
+    // Init
+    loadFromParams();
+    if (document.querySelectorAll('#scenarios-body tr').length === 0) {
+      addRow(); addRow(); addRow();
+    }
+  </script>
+</body>
+</html>

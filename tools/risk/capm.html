@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CAPM Required Return - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header"><div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div></header>
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>CAPM Required Return</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+    <div class="tool-insight">
+      <div class="insight-why"><span class="insight-icon">💡</span><div>
+        <strong>Why This Matters</strong>
+        <p>The Capital Asset Pricing Model (CAPM) tells you the <em>minimum required return</em> an investor should demand given a stock's systematic risk (β). If expected return &lt; CAPM required return, the stock is overvalued.</p>
+      </div></div>
+      <div class="insight-vars"><div class="insight-var-title">Formula:</div><ul>
+        <li><strong>rᵢ = rf + β(rₘ − rf)</strong></li>
+        <li><strong>rf</strong> — risk-free rate (e.g. T-bill rate)</li>
+        <li><strong>β</strong> — beta (systematic risk)</li>
+        <li><strong>rₘ</strong> — expected market return (or enter MRP directly)</li>
+        <li><strong>rₘ − rf</strong> — market risk premium (MRP)</li>
+      </ul></div>
+    </div>
+
+    <div class="mode-switch" id="exam-toggle" style="margin-bottom:1rem">
+      <button class="active" data-mode="normal">Normal Mode</button><button data-mode="exam">Exam Mode</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">What You Know</div>
+      <div class="input-grid">
+        <div class="field"><label>Risk-Free Rate rf (%)</label><input type="number" step="any" id="rf" placeholder="e.g. 4"></div>
+        <div class="field"><label>Beta (β)</label><input type="number" step="any" id="beta" placeholder="e.g. 1.25"></div>
+        <div class="field"><label>Market Return rₘ (%)</label><input type="number" step="any" id="rm" placeholder="e.g. 12"></div>
+      </div>
+      <div class="advanced-section exam-hide" style="margin-top:.75rem">
+        <button class="advanced-toggle">&#9656; Advanced Options</button>
+        <div class="advanced-content hidden">
+          <div class="field">
+            <label>Market Risk Premium MRP (%) <span style="font-size:.8rem;color:var(--text-muted)">— used only if rₘ is blank</span></label>
+            <input type="number" step="any" id="mrp" placeholder="e.g. 8">
+          </div>
+          <p style="font-size:.8rem;color:var(--text-muted);margin-top:.25rem">If both rₘ and MRP are provided, rₘ takes priority.</p>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btn-solve" style="margin-top:1rem">Calculate Required Return</button>
+
+    <div class="card hidden" id="result-card" style="margin-top:1rem">
+      <div class="card-title">Result</div>
+      <div class="result-primary" id="result-main"></div>
+      <div class="result-details" id="result-details"></div>
+      <button class="advanced-toggle" id="btn-steps" style="margin-top:.75rem">&#9656; Show Steps</button>
+      <div id="steps-content" class="hidden"></div>
+      <button class="btn-sm" id="btn-share" style="margin-top:.75rem">&#128279; Copy Share Link</button>
+    </div>
+  </main>
+  <script src="/js/components.js"></script>
+  <script src="/js/risk.js"></script>
+  <script>
+    function solve() {
+      const rf=parseFloat(document.getElementById('rf').value)/100;
+      const beta=parseFloat(document.getElementById('beta').value);
+      const rmVal=document.getElementById('rm').value;
+      const mrpVal=document.getElementById('mrp').value;
+
+      if (isNaN(rf)||isNaN(beta)){alert('rf and β are required.');return;}
+
+      let rm, mrp, usedMrp=false;
+      if (rmVal!=='') {
+        rm=parseFloat(rmVal)/100;
+        mrp=rm-rf;
+      } else if (mrpVal!=='') {
+        mrp=parseFloat(mrpVal)/100;
+        rm=rf+mrp;
+        usedMrp=true;
+      } else {
+        alert('Enter either Market Return (rₘ) or Market Risk Premium (MRP).');return;
+      }
+
+      const ri=Risk.capm(rf,beta,rm);
+      document.getElementById('result-card').classList.remove('hidden');
+      document.getElementById('result-main').innerHTML=`Required Return: <strong>${(ri*100).toFixed(2)}%</strong>`;
+      const det=document.getElementById('result-details');det.innerHTML='';
+      addDetail(det,'rf',`${(rf*100).toFixed(2)}%`);
+      addDetail(det,'β',beta.toFixed(4));
+      addDetail(det,'rₘ',`${(rm*100).toFixed(2)}%`);
+      addDetail(det,'MRP (rₘ−rf)',`${(mrp*100).toFixed(2)}%`);
+      addDetail(det,'β × MRP',`${(beta*mrp*100).toFixed(2)}%`);
+      addDetail(det,'rᵢ',`${(ri*100).toFixed(2)}%`);
+
+      document.getElementById('steps-content').innerHTML=`<div class="steps-box">
+        <p><strong>rᵢ = rf + β(rₘ − rf)</strong></p>
+        <p>= ${(rf*100).toFixed(2)}% + ${beta.toFixed(4)} × (${(rm*100).toFixed(2)}% − ${(rf*100).toFixed(2)}%)</p>
+        <p>= ${(rf*100).toFixed(2)}% + ${beta.toFixed(4)} × ${(mrp*100).toFixed(2)}%</p>
+        <p>= ${(rf*100).toFixed(2)}% + ${(beta*mrp*100).toFixed(2)}%</p>
+        <p><strong>rᵢ = ${(ri*100).toFixed(2)}%</strong></p>
+        ${usedMrp?'<p><em>Note: rₘ was derived from MRP + rf.</em></p>':''}
+        <p>💡 An investor should require at least ${(ri*100).toFixed(2)}% to hold this asset given its systematic risk of β = ${beta.toFixed(2)}.</p>
+      </div>`;
+    }
+
+    function addDetail(c,l,v){const d=document.createElement('div');d.className='detail-item';d.innerHTML=`<div class="detail-label">${l}</div><div class="detail-value">${v}</div>`;c.appendChild(d);}
+
+    document.getElementById('exam-toggle').addEventListener('click',e=>{const btn=e.target.closest('button');if(!btn)return;document.querySelectorAll('#exam-toggle button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.exam-hide').forEach(el=>el.style.display=btn.dataset.mode==='exam'?'none':'');});
+    document.getElementById('btn-solve').addEventListener('click',solve);
+    document.getElementById('btn-steps').addEventListener('click',function(){const c=document.getElementById('steps-content');c.classList.toggle('hidden');this.textContent=c.classList.contains('hidden')?'▶ Show Steps':'▼ Hide Steps';});
+    document.getElementById('btn-reset').addEventListener('click',()=>{['rf','beta','rm','mrp'].forEach(id=>document.getElementById(id).value='');document.getElementById('result-card').classList.add('hidden');});
+    document.getElementById('btn-example').addEventListener('click',()=>{document.getElementById('rf').value='4';document.getElementById('beta').value='1.25';document.getElementById('rm').value='12';});
+    document.getElementById('btn-share').addEventListener('click',()=>{const p=new URLSearchParams({rf:document.getElementById('rf').value,beta:document.getElementById('beta').value,rm:document.getElementById('rm').value,mrp:document.getElementById('mrp').value});navigator.clipboard.writeText(location.origin+location.pathname+'?'+p).then(()=>alert('Copied!'));});
+    const params=new URLSearchParams(location.search);['rf','beta','rm','mrp'].forEach(id=>{if(params.get(id))document.getElementById(id).value=params.get(id);});
+  </script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sharpe Ratio - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header"><div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div></header>
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Sharpe Ratio</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+    <div class="tool-insight">
+      <div class="insight-why"><span class="insight-icon">💡</span><div>
+        <strong>Why This Matters</strong>
+        <p>The Sharpe Ratio measures return <em>above the risk-free rate</em> per unit of risk. It answers: "Am I being compensated for the risk I'm taking?" Higher Sharpe = better risk-adjusted performance.</p>
+      </div></div>
+      <div class="insight-vars"><div class="insight-var-title">Formula:</div><ul>
+        <li><strong>Sharpe = (rₚ − rf) / σ</strong></li>
+        <li><strong>rₚ</strong> — portfolio or asset return (%)</li>
+        <li><strong>rf</strong> — risk-free rate (%)</li>
+        <li><strong>σ</strong> — standard deviation of returns (%)</li>
+      </ul></div>
+    </div>
+
+    <div class="mode-switch" id="exam-toggle" style="margin-bottom:.5rem">
+      <button class="active" data-mode="normal">Normal Mode</button><button data-mode="exam">Exam Mode</button>
+    </div>
+    <div class="mode-switch" id="compare-toggle" style="margin-bottom:1rem">
+      <button class="active" data-compare="single">Single Asset</button><button data-compare="compare">Compare A vs B</button>
+    </div>
+
+    <div id="single-panel">
+      <div class="card">
+        <div class="card-title">What You Know</div>
+        <div class="input-grid">
+          <div class="field"><label>Portfolio Return rₚ (%)</label><input type="number" step="any" id="rp" placeholder="e.g. 14"></div>
+          <div class="field"><label>Risk-Free Rate rf (%)</label><input type="number" step="any" id="rf" placeholder="e.g. 4"></div>
+          <div class="field"><label>Standard Deviation σ (%)</label><input type="number" step="any" id="sigma" placeholder="e.g. 8.5"></div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-solve" style="margin-top:1rem">Calculate Sharpe Ratio</button>
+      <div class="card hidden" id="result-card" style="margin-top:1rem">
+        <div class="card-title">Result</div>
+        <div class="result-primary" id="result-main"></div>
+        <div class="result-details" id="result-details"></div>
+        <button class="advanced-toggle" id="btn-steps" style="margin-top:.75rem">&#9656; Show Steps</button>
+        <div id="steps-content" class="hidden"></div>
+        <button class="btn-sm" id="btn-share" style="margin-top:.75rem">&#128279; Copy Share Link</button>
+      </div>
+    </div>
+
+    <div id="compare-panel" class="hidden">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="card"><div class="card-title">Asset A</div>
+          <div class="field"><label>rₚ (%)</label><input type="number" step="any" id="cmp-rp-a" placeholder="14"></div>
+          <div class="field"><label>rf (%)</label><input type="number" step="any" id="cmp-rf-a" placeholder="4"></div>
+          <div class="field"><label>σ (%)</label><input type="number" step="any" id="cmp-sigma-a" placeholder="8.5"></div>
+        </div>
+        <div class="card"><div class="card-title">Asset B</div>
+          <div class="field"><label>rₚ (%)</label><input type="number" step="any" id="cmp-rp-b" placeholder="16"></div>
+          <div class="field"><label>rf (%)</label><input type="number" step="any" id="cmp-rf-b" placeholder="4"></div>
+          <div class="field"><label>σ (%)</label><input type="number" step="any" id="cmp-sigma-b" placeholder="13"></div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-compare" style="margin-top:1rem">Compare A vs B</button>
+      <div class="card hidden" id="cmp-result" style="margin-top:1rem">
+        <div class="card-title">Comparison</div><div id="cmp-result-body"></div>
+      </div>
+    </div>
+  </main>
+  <script src="/js/components.js"></script>
+  <script src="/js/risk.js"></script>
+  <script>
+    function solve() {
+      const rp=parseFloat(document.getElementById('rp').value)/100;
+      const rf=parseFloat(document.getElementById('rf').value)/100;
+      const sigma=parseFloat(document.getElementById('sigma').value)/100;
+      if ([rp,rf,sigma].some(isNaN)) { alert('Fill in all three fields.'); return; }
+      if (sigma===0) { document.getElementById('result-main').textContent='Sharpe undefined (σ = 0)'; document.getElementById('result-card').classList.remove('hidden'); return; }
+      const s=Risk.sharpe(rp,rf,sigma);
+      document.getElementById('result-card').classList.remove('hidden');
+      document.getElementById('result-main').innerHTML=`Sharpe = <strong>${s.toFixed(4)}</strong>`;
+      const det=document.getElementById('result-details'); det.innerHTML='';
+      addDetail(det,'rₚ − rf',`${((rp-rf)*100).toFixed(2)}%`);
+      addDetail(det,'σ',`${(sigma*100).toFixed(2)}%`);
+      addDetail(det,'Sharpe',s.toFixed(4));
+      document.getElementById('steps-content').innerHTML=`<div class="steps-box">
+        <p><strong>Sharpe = (rₚ − rf) / σ = (${(rp*100).toFixed(2)}% − ${(rf*100).toFixed(2)}%) / ${(sigma*100).toFixed(2)}% = ${s.toFixed(4)}</strong></p>
+        <p>💡 For every 1% of risk (σ), this asset earns ${s.toFixed(4)} units of excess return. ${s>1?'A Sharpe > 1 is generally considered good.':s>0?'Positive Sharpe: earns more than risk-free.':'Negative Sharpe: underperforms risk-free.'}</p></div>`;
+    }
+
+    function compareAB() {
+      const vals=['rp','rf','sigma'].map(f=>['a','b'].map(s=>parseFloat(document.getElementById(`cmp-${f}-${s}`).value)/100));
+      if (vals.flat().some(isNaN)) { alert('Fill in all fields for A and B.'); return; }
+      const [rps,rfs,sigmas]=vals;
+      const sA=Risk.sharpe(rps[0],rfs[0],sigmas[0]), sB=Risk.sharpe(rps[1],rfs[1],sigmas[1]);
+      document.getElementById('cmp-result').classList.remove('hidden');
+      document.getElementById('cmp-result-body').innerHTML=`
+        <table class="data-table"><thead><tr><th>Metric</th><th>Asset A</th><th>Asset B</th><th>Better</th></tr></thead><tbody>
+          <tr><td>Return rₚ</td><td>${(rps[0]*100).toFixed(2)}%</td><td>${(rps[1]*100).toFixed(2)}%</td><td>—</td></tr>
+          <tr><td>σ</td><td>${(sigmas[0]*100).toFixed(2)}%</td><td>${(sigmas[1]*100).toFixed(2)}%</td><td>—</td></tr>
+          <tr><td>Sharpe Ratio</td><td>${sA.toFixed(4)}</td><td>${sB.toFixed(4)}</td><td>${sA>sB?'A ✅ (higher Sharpe)':'B ✅ (higher Sharpe)'}</td></tr>
+        </tbody></table>
+        <p style="margin-top:.5rem">💡 <strong>${sA>sB?'Asset A':'Asset B'}</strong> provides better risk-adjusted return.</p>`;
+    }
+
+    function addDetail(c,l,v){const d=document.createElement('div');d.className='detail-item';d.innerHTML=`<div class="detail-label">${l}</div><div class="detail-value">${v}</div>`;c.appendChild(d);}
+
+    document.getElementById('compare-toggle').addEventListener('click',e=>{const btn=e.target.closest('button');if(!btn)return;document.querySelectorAll('#compare-toggle button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const isCmp=btn.dataset.compare==='compare';document.getElementById('single-panel').classList.toggle('hidden',isCmp);document.getElementById('compare-panel').classList.toggle('hidden',!isCmp);});
+    document.getElementById('exam-toggle').addEventListener('click',e=>{const btn=e.target.closest('button');if(!btn)return;document.querySelectorAll('#exam-toggle button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.exam-hide').forEach(el=>el.style.display=btn.dataset.mode==='exam'?'none':'');});
+    document.getElementById('btn-solve').addEventListener('click',solve);
+    document.getElementById('btn-compare').addEventListener('click',compareAB);
+    document.getElementById('btn-steps').addEventListener('click',function(){const c=document.getElementById('steps-content');c.classList.toggle('hidden');this.textContent=c.classList.contains('hidden')?'▶ Show Steps':'▼ Hide Steps';});
+    document.getElementById('btn-reset').addEventListener('click',()=>{['rp','rf','sigma'].forEach(id=>document.getElementById(id).value='');document.getElementById('result-card').classList.add('hidden');});
+    document.getElementById('btn-example').addEventListener('click',()=>{document.getElementById('rp').value='14';document.getElementById('rf').value='4';document.getElementById('sigma').value='8.5';});
+    document.getElementById('btn-share').addEventListener('click',()=>{const p=new URLSearchParams({rp:document.getElementById('rp').value,rf:document.getElementById('rf').value,sigma:document.getElementById('sigma').value});navigator.clipboard.writeText(location.origin+location.pathname+'?'+p).then(()=>alert('Copied!'));});
+    const params=new URLSearchParams(location.search);['rp','rf','sigma'].forEach(id=>{if(params.get(id))document.getElementById(id).value=params.get(id);});
+  </script>
+</body>
+</html>

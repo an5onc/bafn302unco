@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Coefficient of Variation - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header"><div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div></header>
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Coefficient of Variation (CV)</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+    <div class="tool-insight">
+      <div class="insight-why"><span class="insight-icon">💡</span><div>
+        <strong>Why This Matters</strong>
+        <p>CV = σ / r̄ measures <em>risk per unit of return</em>. It lets you compare two assets with different expected returns on a level playing field — lower CV = more efficient risk.</p>
+      </div></div>
+      <div class="insight-vars"><div class="insight-var-title">Formula:</div><ul>
+        <li><strong>CV = σ / r̄</strong></li>
+        <li>Enter σ and r̄ directly, or compute from probability scenarios below.</li>
+      </ul></div>
+    </div>
+
+    <div class="mode-switch" id="exam-toggle" style="margin-bottom:.5rem">
+      <button class="active" data-mode="normal">Normal Mode</button><button data-mode="exam">Exam Mode</button>
+    </div>
+    <div class="mode-switch" id="compare-toggle" style="margin-bottom:1rem">
+      <button class="active" data-compare="single">Single Asset</button><button data-compare="compare">Compare A vs B</button>
+    </div>
+    <div class="mode-switch" id="input-mode-toggle" style="margin-bottom:1rem">
+      <button class="active" data-imode="direct">Direct Input (σ and r̄)</button><button data-imode="prob">From Probability Scenarios</button>
+    </div>
+
+    <!-- Single -->
+    <div id="single-panel">
+      <div class="card" id="direct-panel">
+        <div class="card-title">What You Know</div>
+        <div class="input-grid">
+          <div class="field"><label>Standard Deviation σ (%)</label><input type="number" step="any" id="sigma" placeholder="e.g. 8.5"></div>
+          <div class="field"><label>Expected Return r̄ (%)</label><input type="number" step="any" id="rbar" placeholder="e.g. 12"></div>
+        </div>
+      </div>
+      <div class="card hidden" id="prob-panel">
+        <div class="card-title">Probability Scenarios</div>
+        <div id="prob-warn" class="warn-box hidden"></div>
+        <table class="data-table"><thead><tr><th>Scenario</th><th>Prob (0–1)</th><th>Return (%)</th><th></th></tr></thead>
+        <tbody id="prob-body"></tbody></table>
+        <button class="btn-sm" id="btn-add-prob">+ Add Scenario</button>
+      </div>
+      <button class="btn-primary" id="btn-solve" style="margin-top:1rem">Calculate CV</button>
+      <div class="card hidden" id="result-card" style="margin-top:1rem">
+        <div class="card-title">Result</div>
+        <div class="result-primary" id="result-main"></div>
+        <div class="result-details" id="result-details"></div>
+        <button class="advanced-toggle" id="btn-steps" style="margin-top:.75rem">&#9656; Show Steps</button>
+        <div id="steps-content" class="hidden"></div>
+        <button class="btn-sm" id="btn-share" style="margin-top:.75rem">&#128279; Copy Share Link</button>
+      </div>
+    </div>
+
+    <!-- Compare A vs B -->
+    <div id="compare-panel" class="hidden">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="card"><div class="card-title">Asset A</div>
+          <div class="field"><label>σ (%)</label><input type="number" step="any" id="cmp-sigma-a" placeholder="8.5"></div>
+          <div class="field"><label>r̄ (%)</label><input type="number" step="any" id="cmp-rbar-a" placeholder="12"></div>
+        </div>
+        <div class="card"><div class="card-title">Asset B</div>
+          <div class="field"><label>σ (%)</label><input type="number" step="any" id="cmp-sigma-b" placeholder="11"></div>
+          <div class="field"><label>r̄ (%)</label><input type="number" step="any" id="cmp-rbar-b" placeholder="14"></div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-compare" style="margin-top:1rem">Compare A vs B</button>
+      <div class="card hidden" id="cmp-result" style="margin-top:1rem">
+        <div class="card-title">Comparison</div>
+        <div id="cmp-result-body"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/components.js"></script>
+  <script src="/js/risk.js"></script>
+  <script>
+    let probRowCount = 0;
+    function addProbRow(p='',r='') {
+      probRowCount++;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>S${probRowCount}</td>
+        <td><input type="number" step="any" class="prob-input" value="${p}" placeholder="0.33"></td>
+        <td><input type="number" step="any" class="ret-input" value="${r}" placeholder="12"></td>
+        <td><button class="btn-sm btn-danger" onclick="this.closest('tr').remove()">✕</button></td>`;
+      document.getElementById('prob-body').appendChild(tr);
+    }
+
+    function solve() {
+      const dec = 2;
+      let sigma, rbar;
+      if (document.getElementById('direct-panel').classList.contains('hidden') === false) {
+        sigma = parseFloat(document.getElementById('sigma').value);
+        rbar = parseFloat(document.getElementById('rbar').value);
+        if (isNaN(sigma) || isNaN(rbar)) { alert('Enter both σ and r̄.'); return; }
+        sigma /= 100; rbar /= 100;
+      } else {
+        const scenarios = Array.from(document.querySelectorAll('#prob-body tr')).map(tr=>({
+          prob: parseFloat(tr.querySelector('.prob-input').value)||0,
+          ret: (parseFloat(tr.querySelector('.ret-input').value)||0)/100
+        })).filter(s=>s.prob>0);
+        if (scenarios.length < 2) { alert('Need at least 2 scenarios.'); return; }
+        const res = Risk.stdDevProb(scenarios);
+        sigma = res.stdDev; rbar = res.mean;
+      }
+      if (rbar === 0) { document.getElementById('result-main').textContent = 'CV undefined (r̄ = 0)'; document.getElementById('result-card').classList.remove('hidden'); return; }
+      const cvVal = Risk.cv(sigma, rbar);
+      document.getElementById('result-card').classList.remove('hidden');
+      document.getElementById('result-main').innerHTML = `CV = <strong>${cvVal.toFixed(dec+2)}</strong>`;
+      const det = document.getElementById('result-details'); det.innerHTML='';
+      addDetail(det,'σ',`${(sigma*100).toFixed(dec)}%`);
+      addDetail(det,'r̄',`${(rbar*100).toFixed(dec)}%`);
+      addDetail(det,'CV = σ/r̄',cvVal.toFixed(4));
+      document.getElementById('steps-content').innerHTML = `<div class="steps-box">
+        <p><strong>CV = σ / r̄ = ${(sigma*100).toFixed(dec)}% / ${(rbar*100).toFixed(dec)}% = ${cvVal.toFixed(4)}</strong></p>
+        <p>💡 For every 1% of expected return, you bear ${cvVal.toFixed(4)} units of risk. Lower CV = more efficient investment.</p></div>`;
+    }
+
+    function compareAB() {
+      const sA = parseFloat(document.getElementById('cmp-sigma-a').value)/100;
+      const rA = parseFloat(document.getElementById('cmp-rbar-a').value)/100;
+      const sB = parseFloat(document.getElementById('cmp-sigma-b').value)/100;
+      const rB = parseFloat(document.getElementById('cmp-rbar-b').value)/100;
+      if ([sA,rA,sB,rB].some(isNaN)) { alert('Fill in all four fields.'); return; }
+      const cvA = Risk.cv(sA,rA), cvB = Risk.cv(sB,rB);
+      const card = document.getElementById('cmp-result');
+      card.classList.remove('hidden');
+      document.getElementById('cmp-result-body').innerHTML = `
+        <table class="data-table"><thead><tr><th>Metric</th><th>Asset A</th><th>Asset B</th><th>Better</th></tr></thead><tbody>
+          <tr><td>σ</td><td>${(sA*100).toFixed(2)}%</td><td>${(sB*100).toFixed(2)}%</td><td>—</td></tr>
+          <tr><td>r̄</td><td>${(rA*100).toFixed(2)}%</td><td>${(rB*100).toFixed(2)}%</td><td>—</td></tr>
+          <tr><td>CV</td><td>${cvA.toFixed(4)}</td><td>${cvB.toFixed(4)}</td><td>${cvA<cvB?'A ✅ (lower CV)':'B ✅ (lower CV)'}</td></tr>
+        </tbody></table>
+        <p style="margin-top:.5rem">💡 <strong>${cvA<cvB?'Asset A':'Asset B'}</strong> offers less risk per unit of return.</p>`;
+    }
+
+    function addDetail(c,l,v){const d=document.createElement('div');d.className='detail-item';d.innerHTML=`<div class="detail-label">${l}</div><div class="detail-value">${v}</div>`;c.appendChild(d);}
+
+    document.getElementById('input-mode-toggle').addEventListener('click', e=>{
+      const btn=e.target.closest('button');if(!btn)return;
+      document.querySelectorAll('#input-mode-toggle button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+      const isProb=btn.dataset.imode==='prob';
+      document.getElementById('direct-panel').classList.toggle('hidden',isProb);
+      document.getElementById('prob-panel').classList.toggle('hidden',!isProb);
+    });
+    document.getElementById('compare-toggle').addEventListener('click', e=>{
+      const btn=e.target.closest('button');if(!btn)return;
+      document.querySelectorAll('#compare-toggle button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+      const isCmp=btn.dataset.compare==='compare';
+      document.getElementById('single-panel').classList.toggle('hidden',isCmp);
+      document.getElementById('compare-panel').classList.toggle('hidden',!isCmp);
+    });
+    document.getElementById('exam-toggle').addEventListener('click', e=>{
+      const btn=e.target.closest('button');if(!btn)return;
+      document.querySelectorAll('#exam-toggle button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+      document.querySelectorAll('.exam-hide').forEach(el=>el.style.display=btn.dataset.mode==='exam'?'none':'');
+    });
+    document.getElementById('btn-solve').addEventListener('click', solve);
+    document.getElementById('btn-compare').addEventListener('click', compareAB);
+    document.getElementById('btn-add-prob').addEventListener('click',()=>addProbRow());
+    document.getElementById('btn-steps').addEventListener('click',function(){const c=document.getElementById('steps-content');c.classList.toggle('hidden');this.textContent=c.classList.contains('hidden')?'▶ Show Steps':'▼ Hide Steps';});
+    document.getElementById('btn-reset').addEventListener('click',()=>{['sigma','rbar'].forEach(id=>document.getElementById(id).value='');document.getElementById('result-card').classList.add('hidden');});
+    document.getElementById('btn-example').addEventListener('click',()=>{document.getElementById('sigma').value='8.5';document.getElementById('rbar').value='12';});
+    document.getElementById('btn-share').addEventListener('click',()=>navigator.clipboard.writeText(location.href).then(()=>alert('Copied!')));
+  </script>
+</body>
+</html>

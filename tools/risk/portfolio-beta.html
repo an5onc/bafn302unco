@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Portfolio Beta - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header"><div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div></header>
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Portfolio Beta</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+    <div class="tool-insight">
+      <div class="insight-why"><span class="insight-icon">💡</span><div>
+        <strong>Why This Matters</strong>
+        <p>Portfolio beta is the weighted average of individual betas. It tells you how sensitive your overall portfolio is to market movements.</p>
+      </div></div>
+      <div class="insight-vars"><div class="insight-var-title">Formula:</div><ul>
+        <li><strong>βₚ = Σ (wᵢ × βᵢ)</strong></li>
+        <li>βₚ = 1 → moves with market | βₚ &gt; 1 → more volatile | βₚ &lt; 1 → more defensive</li>
+      </ul></div>
+    </div>
+
+    <div class="mode-switch" id="exam-toggle" style="margin-bottom:1rem">
+      <button class="active" data-mode="normal">Normal Mode</button><button data-mode="exam">Exam Mode</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Portfolio Holdings</div>
+      <div id="weight-warn" class="warn-box hidden"></div>
+      <table class="data-table">
+        <thead><tr><th>Asset</th><th>Weight (0–1)</th><th>Beta (β)</th><th></th></tr></thead>
+        <tbody id="holdings-body"></tbody>
+      </table>
+      <button class="btn-sm" id="btn-add-row">+ Add Asset</button>
+    </div>
+    <button class="btn-primary" id="btn-solve" style="margin-top:1rem">Calculate Portfolio Beta</button>
+
+    <div class="card hidden" id="result-card" style="margin-top:1rem">
+      <div class="card-title">Result</div>
+      <div class="result-primary" id="result-main"></div>
+      <div class="result-details" id="result-details"></div>
+      <div id="beta-interpretation" style="margin-top:.75rem;padding:.75rem 1rem;border-radius:.5rem;background:var(--surface2);font-size:.9rem"></div>
+      <button class="advanced-toggle" id="btn-steps" style="margin-top:.75rem">&#9656; Show Steps</button>
+      <div id="steps-content" class="hidden"></div>
+      <button class="btn-sm" id="btn-share" style="margin-top:.75rem">&#128279; Copy Share Link</button>
+    </div>
+  </main>
+  <script src="/js/components.js"></script>
+  <script src="/js/risk.js"></script>
+  <script>
+    let rowCount=0;
+    function addRow(w='',b='',name='') {
+      rowCount++;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td><input type="text" class="name-input" value="${name}" placeholder="Asset ${rowCount}" style="width:90px"></td>
+        <td><input type="number" step="any" class="weight-input" value="${w}" placeholder="0.40"></td>
+        <td><input type="number" step="any" class="beta-input" value="${b}" placeholder="1.25"></td>
+        <td><button class="btn-sm btn-danger" onclick="this.closest('tr').remove()">✕</button></td>`;
+      document.getElementById('holdings-body').appendChild(tr);
+    }
+
+    function solve() {
+      const holdings=Array.from(document.querySelectorAll('#holdings-body tr')).map(tr=>({
+        name:tr.querySelector('.name-input').value||'Asset',
+        weight:parseFloat(tr.querySelector('.weight-input').value)||0,
+        beta:parseFloat(tr.querySelector('.beta-input').value)||0
+      })).filter(h=>h.weight>0);
+      if (holdings.length<1){alert('Add at least one holding.');return;}
+      const sumW=Risk.sumWeights(holdings);
+      const warn=document.getElementById('weight-warn');
+      if (Math.abs(sumW-1)>0.001){warn.classList.remove('hidden');warn.innerHTML=`⚠️ Weights sum to ${sumW.toFixed(4)}. <button class="btn-sm" onclick="normalize()">Normalize</button>`;}
+      else warn.classList.add('hidden');
+
+      const bp=Risk.portfolioBeta(holdings);
+      document.getElementById('result-card').classList.remove('hidden');
+      document.getElementById('result-main').innerHTML=`βₚ = <strong>${bp.toFixed(4)}</strong>`;
+      const det=document.getElementById('result-details');det.innerHTML='';
+      holdings.forEach(h=>addDetail(det,h.name,`${h.weight.toFixed(3)} × ${h.beta.toFixed(3)} = ${(h.weight*h.beta).toFixed(4)}`));
+      addDetail(det,'βₚ',bp.toFixed(4));
+      document.getElementById('beta-interpretation').textContent=
+        bp>1.2?`📈 βₚ = ${bp.toFixed(2)}: Aggressive portfolio — more sensitive than market.`:
+        bp<0.8?`📉 βₚ = ${bp.toFixed(2)}: Defensive portfolio — less sensitive than market.`:
+        `📊 βₚ = ${bp.toFixed(2)}: Near-market portfolio — moves approximately with the market.`;
+
+      let steps=`<div class="steps-box"><p><strong>βₚ = Σ (wᵢ × βᵢ)</strong></p><ul>`;
+      holdings.forEach(h=>{steps+=`<li>${h.name}: ${h.weight.toFixed(4)} × ${h.beta.toFixed(4)} = ${(h.weight*h.beta).toFixed(4)}</li>`;});
+      steps+=`</ul><p><strong>βₚ = ${bp.toFixed(4)}</strong></p></div>`;
+      document.getElementById('steps-content').innerHTML=steps;
+    }
+
+    function normalize() {
+      const rows=document.querySelectorAll('#holdings-body tr');
+      const weights=Array.from(rows).map(tr=>parseFloat(tr.querySelector('.weight-input').value)||0);
+      const total=weights.reduce((a,b)=>a+b,0);
+      rows.forEach((tr,i)=>tr.querySelector('.weight-input').value=(weights[i]/total).toFixed(4));
+      document.getElementById('weight-warn').classList.add('hidden');
+    }
+
+    function addDetail(c,l,v){const d=document.createElement('div');d.className='detail-item';d.innerHTML=`<div class="detail-label">${l}</div><div class="detail-value">${v}</div>`;c.appendChild(d);}
+
+    document.getElementById('exam-toggle').addEventListener('click',e=>{const btn=e.target.closest('button');if(!btn)return;document.querySelectorAll('#exam-toggle button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.exam-hide').forEach(el=>el.style.display=btn.dataset.mode==='exam'?'none':'');});
+    document.getElementById('btn-solve').addEventListener('click',solve);
+    document.getElementById('btn-add-row').addEventListener('click',()=>addRow());
+    document.getElementById('btn-steps').addEventListener('click',function(){const c=document.getElementById('steps-content');c.classList.toggle('hidden');this.textContent=c.classList.contains('hidden')?'▶ Show Steps':'▼ Hide Steps';});
+    document.getElementById('btn-reset').addEventListener('click',()=>{document.getElementById('holdings-body').innerHTML='';rowCount=0;addRow();addRow();addRow();document.getElementById('result-card').classList.add('hidden');document.getElementById('weight-warn').classList.add('hidden');});
+    document.getElementById('btn-example').addEventListener('click',()=>{document.getElementById('holdings-body').innerHTML='';rowCount=0;addRow('0.50','1.40','Tech Stock');addRow('0.30','0.85','Utility');addRow('0.20','1.10','Bank');});
+    document.getElementById('btn-share').addEventListener('click',()=>navigator.clipboard.writeText(location.href).then(()=>alert('Copied!')));
+    addRow();addRow();addRow();
+  </script>
+</body>
+</html>

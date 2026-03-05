@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Standard Deviation - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div>
+  </header>
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Standard Deviation</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="tool-insight">
+      <div class="insight-why"><span class="insight-icon">💡</span><div>
+        <strong>Why This Matters</strong>
+        <p>Standard deviation measures the <em>spread</em> of possible returns — it is the primary measure of risk in finance. A higher σ means more variability (more risk).</p>
+      </div></div>
+      <div class="insight-vars"><div class="insight-var-title">Formulas:</div><ul>
+        <li><strong>Prob mode:</strong> σ² = Σ pᵢ(rᵢ − r̄)²; σ = √σ²</li>
+        <li><strong>Historical (sample):</strong> σ = √[Σ(rᵢ−r̄)²/(n−1)]</li>
+        <li><strong>Historical (population):</strong> σ = √[Σ(rᵢ−r̄)²/n]</li>
+      </ul></div>
+    </div>
+
+    <div class="mode-switch" id="exam-toggle" style="margin-bottom:.5rem">
+      <button class="active" data-mode="normal">Normal Mode</button>
+      <button data-mode="exam">Exam Mode</button>
+    </div>
+    <div class="mode-switch" id="calc-mode-toggle" style="margin-bottom:1rem">
+      <button class="active" data-cmode="prob">Probability Mode</button>
+      <button data-cmode="hist">Historical Mode</button>
+    </div>
+    <div class="mode-switch" id="compare-toggle" style="margin-bottom:1rem">
+      <button class="active" data-compare="single">Single Asset</button>
+      <button data-compare="compare">Compare A vs B</button>
+    </div>
+
+    <!-- Single calc -->
+    <div id="single-panel">
+      <div id="prob-panel" class="card">
+        <div class="card-title">Probability Scenarios</div>
+        <div id="prob-warn" class="warn-box hidden"></div>
+        <table class="data-table"><thead><tr><th>Scenario</th><th>Prob (0–1)</th><th>Return (%)</th><th></th></tr></thead>
+        <tbody id="prob-body"></tbody></table>
+        <button class="btn-sm" id="btn-add-prob">+ Add Scenario</button>
+      </div>
+      <div id="hist-panel" class="card hidden">
+        <div class="card-title">Historical Returns</div>
+        <table class="data-table"><thead><tr><th>#</th><th>Return (%)</th><th></th></tr></thead>
+        <tbody id="hist-body"></tbody></table>
+        <button class="btn-sm" id="btn-add-hist">+ Add Return</button>
+        <div class="advanced-section exam-hide" style="margin-top:.75rem">
+          <button class="advanced-toggle">&#9656; Advanced Options</button>
+          <div class="advanced-content hidden">
+            <div class="field"><label>Sample or Population</label>
+              <select id="hist-type"><option value="sample">Sample (n−1)</option><option value="pop">Population (n)</option></select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-solve" style="margin-top:1rem">Calculate σ</button>
+    </div>
+
+    <!-- Compare A vs B -->
+    <div id="compare-panel" class="hidden">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="card"><div class="card-title">Asset A — Probability Mode</div>
+          <div id="cmp-warn-a" class="warn-box hidden"></div>
+          <table class="data-table"><thead><tr><th>Prob</th><th>Ret (%)</th><th></th></tr></thead>
+          <tbody id="cmp-body-a"></tbody></table>
+          <button class="btn-sm" onclick="addCmpRow('a')">+ Add</button>
+        </div>
+        <div class="card"><div class="card-title">Asset B — Probability Mode</div>
+          <div id="cmp-warn-b" class="warn-box hidden"></div>
+          <table class="data-table"><thead><tr><th>Prob</th><th>Ret (%)</th><th></th></tr></thead>
+          <tbody id="cmp-body-b"></tbody></table>
+          <button class="btn-sm" onclick="addCmpRow('b')">+ Add</button>
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-compare" style="margin-top:1rem">Compare A vs B</button>
+      <div class="card hidden" id="compare-result-card" style="margin-top:1rem">
+        <div class="card-title">Comparison</div>
+        <div id="compare-result-body"></div>
+      </div>
+    </div>
+
+    <!-- Single result -->
+    <div class="card hidden" id="result-card">
+      <div class="card-title">Result</div>
+      <div class="result-primary" id="result-main"></div>
+      <div class="result-details" id="result-details"></div>
+      <button class="advanced-toggle" id="btn-steps" style="margin-top:1rem">&#9656; Show Steps</button>
+      <div id="steps-content" class="hidden" style="margin-top:.75rem"></div>
+      <button class="btn-sm" id="btn-share" style="margin-top:1rem">&#128279; Copy Share Link</button>
+    </div>
+  </main>
+
+  <script src="/js/components.js"></script>
+  <script src="/js/risk.js"></script>
+  <script>
+    let probRowCount = 0, histRowCount = 0, cmpRowA = 0, cmpRowB = 0;
+    let calcMode = 'prob';
+
+    function addProbRow(prob='', ret='') {
+      probRowCount++;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>S${probRowCount}</td>
+        <td><input type="number" step="any" class="prob-input" value="${prob}" placeholder="0.33"></td>
+        <td><input type="number" step="any" class="ret-input" value="${ret}" placeholder="12"></td>
+        <td><button class="btn-sm btn-danger" onclick="this.closest('tr').remove()">✕</button></td>`;
+      document.getElementById('prob-body').appendChild(tr);
+    }
+
+    function addHistRow(ret='') {
+      histRowCount++;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${histRowCount}</td>
+        <td><input type="number" step="any" class="hist-input" value="${ret}" placeholder="10.5"></td>
+        <td><button class="btn-sm btn-danger" onclick="this.closest('tr').remove()">✕</button></td>`;
+      document.getElementById('hist-body').appendChild(tr);
+    }
+
+    function addCmpRow(side) {
+      const tbody = document.getElementById(`cmp-body-${side}`);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td><input type="number" step="any" class="cmp-prob" placeholder="0.33"></td>
+        <td><input type="number" step="any" class="cmp-ret" placeholder="12"></td>
+        <td><button class="btn-sm btn-danger" onclick="this.closest('tr').remove()">✕</button></td>`;
+      tbody.appendChild(tr);
+    }
+
+    function getScenarios(tbody) {
+      return Array.from(tbody.querySelectorAll('tr')).map(tr => ({
+        prob: parseFloat(tr.querySelector('.prob-input, .cmp-prob')?.value) || 0,
+        ret: (parseFloat(tr.querySelector('.ret-input, .cmp-ret')?.value) || 0) / 100
+      })).filter(s => s.prob > 0);
+    }
+
+    function getHistReturns() {
+      return Array.from(document.querySelectorAll('#hist-body .hist-input'))
+        .map(i => parseFloat(i.value) / 100).filter(v => !isNaN(v));
+    }
+
+    function solve() {
+      const dec = 2;
+      let result;
+      if (calcMode === 'prob') {
+        const scenarios = getScenarios(document.getElementById('prob-body'));
+        if (scenarios.length < 2) { alert('Need at least 2 scenarios.'); return; }
+        checkProbSum(scenarios, 'prob-warn');
+        result = Risk.stdDevProb(scenarios);
+        showResult(result, dec, scenarios);
+      } else {
+        const returns = getHistReturns();
+        if (returns.length < 2) { alert('Need at least 2 historical returns.'); return; }
+        const sample = document.getElementById('hist-type').value === 'sample';
+        result = Risk.stdDevHistorical(returns, sample);
+        showResult(result, dec, null, returns, sample);
+      }
+    }
+
+    function checkProbSum(scenarios, warnId) {
+      const sum = Risk.sumProbs(scenarios);
+      const warn = document.getElementById(warnId);
+      if (Math.abs(sum - 1) > 0.001) {
+        warn.classList.remove('hidden');
+        warn.innerHTML = `⚠️ Probs sum to ${sum.toFixed(4)}. <button class="btn-sm" onclick="normalizeProbs('${warnId}')">Normalize</button>`;
+      } else warn.classList.add('hidden');
+    }
+
+    function normalizeProbs(warnId) {
+      const bodyId = warnId === 'prob-warn' ? 'prob-body' : warnId.replace('-warn', '-body');
+      const rows = document.getElementById(bodyId).querySelectorAll('tr');
+      const probs = Array.from(rows).map(tr => parseFloat(tr.querySelector('.prob-input, .cmp-prob')?.value) || 0);
+      const total = probs.reduce((a,b)=>a+b,0);
+      rows.forEach((tr,i) => { const inp = tr.querySelector('.prob-input, .cmp-prob'); if(inp) inp.value = (probs[i]/total).toFixed(4); });
+      document.getElementById(warnId).classList.add('hidden');
+    }
+
+    function showResult(result, dec, scenarios, returns, sample) {
+      document.getElementById('result-card').classList.remove('hidden');
+      document.getElementById('result-main').innerHTML =
+        `σ = <strong>${(result.stdDev*100).toFixed(dec)}%</strong>`;
+      const det = document.getElementById('result-details');
+      det.innerHTML = '';
+      addDetail(det, 'Mean (r̄)', `${(result.mean*100).toFixed(dec)}%`);
+      addDetail(det, 'Variance (σ²)', `${(result.variance*10000).toFixed(dec+2)} (×10⁻⁴)`);
+      addDetail(det, 'Std Dev (σ)', `${(result.stdDev*100).toFixed(dec)}%`);
+
+      let steps = `<div class="steps-box"><p><strong>Formula:</strong> `;
+      if (scenarios) {
+        steps += `σ² = Σ pᵢ(rᵢ − r̄)²</p><p>r̄ = ${(result.mean*100).toFixed(dec)}%</p><ul>`;
+        scenarios.forEach((s,i) => {
+          const dev = s.ret - result.mean;
+          steps += `<li>p${i+1}(r${i+1}−r̄)² = ${s.prob.toFixed(3)} × (${(s.ret*100).toFixed(2)}%−${(result.mean*100).toFixed(2)}%)² = ${(s.prob*dev*dev*10000).toFixed(4)}</li>`;
+        });
+        steps += `</ul>`;
+      } else {
+        steps += `σ = √[Σ(rᵢ−r̄)²/${sample?'n−1':'n'}]</p><p>r̄ = ${(result.mean*100).toFixed(dec)}%</p>`;
+      }
+      steps += `<p><strong>σ = ${(result.stdDev*100).toFixed(dec)}%</strong></p>
+        <p>💡 A larger σ means more risk — returns are more spread out from the average.</p></div>`;
+      document.getElementById('steps-content').innerHTML = steps;
+    }
+
+    function compareAB() {
+      const sA = getScenarios(document.getElementById('cmp-body-a'));
+      const sB = getScenarios(document.getElementById('cmp-body-b'));
+      if (sA.length < 1 || sB.length < 1) { alert('Add scenarios to both A and B.'); return; }
+      checkProbSum(sA, 'cmp-warn-a');
+      checkProbSum(sB, 'cmp-warn-b');
+      const rA = Risk.stdDevProb(sA), rB = Risk.stdDevProb(sB);
+      const card = document.getElementById('compare-result-card');
+      const body = document.getElementById('compare-result-body');
+      card.classList.remove('hidden');
+      const aWins = rA.stdDev < rB.stdDev;
+      body.innerHTML = `
+        <table class="data-table">
+          <thead><tr><th>Metric</th><th>Asset A</th><th>Asset B</th><th>Better</th></tr></thead>
+          <tbody>
+            <tr><td>Expected Return (r̄)</td><td>${(rA.mean*100).toFixed(2)}%</td><td>${(rB.mean*100).toFixed(2)}%</td><td>${rA.mean>rB.mean?'A ✅':'B ✅'}</td></tr>
+            <tr><td>Std Dev (σ)</td><td>${(rA.stdDev*100).toFixed(2)}%</td><td>${(rB.stdDev*100).toFixed(2)}%</td><td>${aWins?'A ✅ (lower risk)':'B ✅ (lower risk)'}</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:.5rem">💡 <strong>${aWins?'Asset A':'Asset B'}</strong> has lower σ — less risk for similar expected return.</p>`;
+    }
+
+    function addDetail(c, l, v) {
+      const d = document.createElement('div'); d.className='detail-item';
+      d.innerHTML=`<div class="detail-label">${l}</div><div class="detail-value">${v}</div>`; c.appendChild(d);
+    }
+
+    // Mode toggles
+    document.getElementById('calc-mode-toggle').addEventListener('click', e => {
+      const btn = e.target.closest('button'); if(!btn) return;
+      document.querySelectorAll('#calc-mode-toggle button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      calcMode = btn.dataset.cmode;
+      document.getElementById('prob-panel').classList.toggle('hidden', calcMode!=='prob');
+      document.getElementById('hist-panel').classList.toggle('hidden', calcMode!=='hist');
+    });
+
+    document.getElementById('compare-toggle').addEventListener('click', e => {
+      const btn = e.target.closest('button'); if(!btn) return;
+      document.querySelectorAll('#compare-toggle button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const isCompare = btn.dataset.compare === 'compare';
+      document.getElementById('single-panel').classList.toggle('hidden', isCompare);
+      document.getElementById('compare-panel').classList.toggle('hidden', !isCompare);
+    });
+
+    document.getElementById('exam-toggle').addEventListener('click', e => {
+      const btn = e.target.closest('button'); if(!btn) return;
+      document.querySelectorAll('#exam-toggle button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.exam-hide').forEach(el => el.style.display = btn.dataset.mode==='exam'?'none':'');
+    });
+
+    document.getElementById('btn-solve').addEventListener('click', solve);
+    document.getElementById('btn-compare').addEventListener('click', compareAB);
+    document.getElementById('btn-add-prob').addEventListener('click', () => addProbRow());
+    document.getElementById('btn-add-hist').addEventListener('click', () => addHistRow());
+    document.getElementById('btn-steps').addEventListener('click', function() {
+      const c = document.getElementById('steps-content'); c.classList.toggle('hidden');
+      this.textContent = c.classList.contains('hidden') ? '▶ Show Steps' : '▼ Hide Steps';
+    });
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      ['prob-body','hist-body'].forEach(id => document.getElementById(id).innerHTML='');
+      probRowCount = histRowCount = 0;
+      document.getElementById('result-card').classList.add('hidden');
+      addProbRow(); addProbRow(); addProbRow();
+    });
+    document.getElementById('btn-example').addEventListener('click', () => {
+      document.getElementById('prob-body').innerHTML=''; probRowCount=0;
+      addProbRow('0.25','5'); addProbRow('0.50','15'); addProbRow('0.25','25');
+    });
+    document.getElementById('btn-share').addEventListener('click', () => {
+      navigator.clipboard.writeText(location.href).then(() => alert('Link copied!'));
+    });
+
+    // Init
+    addProbRow(); addProbRow(); addProbRow();
+    addHistRow(); addHistRow(); addHistRow();
+    addCmpRow('a'); addCmpRow('a'); addCmpRow('b'); addCmpRow('b');
+  </script>
+</body>
+</html>

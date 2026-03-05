@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Beta Calculator - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header"><div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div></header>
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Beta Calculator</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+    <div class="tool-insight">
+      <div class="insight-why"><span class="insight-icon">💡</span><div>
+        <strong>Why This Matters</strong>
+        <p>Beta measures a stock's sensitivity to market movements. β = 1 means the stock moves with the market. β > 1 is more volatile than the market. β &lt; 1 is less volatile.</p>
+      </div></div>
+      <div class="insight-vars"><div class="insight-var-title">Formulas:</div><ul>
+        <li><strong>Direct mode:</strong> Enter β directly</li>
+        <li><strong>Cov/Var mode:</strong> β = Cov(Rᵢ, Rₘ) / Var(Rₘ)</li>
+      </ul></div>
+    </div>
+
+    <div class="mode-switch" id="exam-toggle" style="margin-bottom:.5rem">
+      <button class="active" data-mode="normal">Normal Mode</button><button data-mode="exam">Exam Mode</button>
+    </div>
+    <div class="mode-switch" id="beta-mode-toggle" style="margin-bottom:1rem">
+      <button class="active" data-bmode="direct">Direct Beta Input</button>
+      <button data-bmode="covvar">Cov / Var Mode</button>
+    </div>
+
+    <div class="card" id="direct-panel">
+      <div class="card-title">What You Know</div>
+      <div class="input-grid">
+        <div class="field"><label>Beta (β)</label><input type="number" step="any" id="beta-direct" placeholder="e.g. 1.25"></div>
+      </div>
+    </div>
+
+    <div class="card hidden" id="covvar-panel">
+      <div class="card-title">Covariance / Variance Mode</div>
+      <div class="input-grid">
+        <div class="field"><label>Cov(Rᵢ, Rₘ)</label><input type="number" step="any" id="cov" placeholder="e.g. 0.0180"></div>
+        <div class="field"><label>Var(Rₘ) — Market Variance</label><input type="number" step="any" id="var-m" placeholder="e.g. 0.0144"></div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btn-solve" style="margin-top:1rem">Calculate β</button>
+
+    <div class="card hidden" id="result-card" style="margin-top:1rem">
+      <div class="card-title">Result</div>
+      <div class="result-primary" id="result-main"></div>
+      <div class="result-details" id="result-details"></div>
+      <div id="beta-interpretation" style="margin-top:.75rem;padding:.75rem 1rem;border-radius:.5rem;background:var(--surface2);font-size:.9rem"></div>
+      <button class="advanced-toggle" id="btn-steps" style="margin-top:.75rem">&#9656; Show Steps</button>
+      <div id="steps-content" class="hidden"></div>
+      <button class="btn-sm" id="btn-share" style="margin-top:.75rem">&#128279; Copy Share Link</button>
+    </div>
+  </main>
+  <script src="/js/components.js"></script>
+  <script src="/js/risk.js"></script>
+  <script>
+    let betaMode='direct';
+
+    function interpretBeta(beta) {
+      if (beta===1) return '📊 β = 1.00: This asset moves exactly with the market.';
+      if (beta>1.5) return `📈 β = ${beta.toFixed(2)}: High volatility — moves ${beta.toFixed(2)}× the market. More risk, potentially more reward.`;
+      if (beta>1) return `📈 β = ${beta.toFixed(2)}: More volatile than market — amplifies market moves. Greater risk/reward.`;
+      if (beta===0) return '➡️ β = 0: No correlation with market (e.g., Treasury bills).';
+      if (beta>0) return `📉 β = ${beta.toFixed(2)}: Less volatile than market — moves ${beta.toFixed(2)}× the market. More defensive.`;
+      return `🔄 β = ${beta.toFixed(2)}: Negative beta — moves opposite to market (e.g., gold in some periods).`;
+    }
+
+    function solve() {
+      let beta;
+      if (betaMode==='direct') {
+        beta=parseFloat(document.getElementById('beta-direct').value);
+        if (isNaN(beta)){alert('Enter a beta value.');return;}
+      } else {
+        const cov=parseFloat(document.getElementById('cov').value);
+        const varM=parseFloat(document.getElementById('var-m').value);
+        if (isNaN(cov)||isNaN(varM)){alert('Enter Cov and Var(Rₘ).');return;}
+        if (varM===0){alert('Var(Rₘ) cannot be zero.');return;}
+        beta=Risk.betaCovVar(cov,varM);
+      }
+
+      document.getElementById('result-card').classList.remove('hidden');
+      document.getElementById('result-main').innerHTML=`β = <strong>${beta.toFixed(4)}</strong>`;
+      document.getElementById('beta-interpretation').textContent=interpretBeta(beta);
+
+      const det=document.getElementById('result-details');det.innerHTML='';
+      if (betaMode==='covvar') {
+        const cov=parseFloat(document.getElementById('cov').value);
+        const varM=parseFloat(document.getElementById('var-m').value);
+        addDetail(det,'Cov(Rᵢ,Rₘ)',cov.toFixed(6));
+        addDetail(det,'Var(Rₘ)',varM.toFixed(6));
+        addDetail(det,'β = Cov/Var',beta.toFixed(4));
+        document.getElementById('steps-content').innerHTML=`<div class="steps-box">
+          <p><strong>β = Cov(Rᵢ, Rₘ) / Var(Rₘ)</strong></p>
+          <p>= ${cov} / ${varM} = <strong>${beta.toFixed(4)}</strong></p>
+          <p>💡 ${interpretBeta(beta)}</p></div>`;
+      } else {
+        addDetail(det,'β',beta.toFixed(4));
+        document.getElementById('steps-content').innerHTML=`<div class="steps-box">
+          <p>Direct input: β = <strong>${beta.toFixed(4)}</strong></p>
+          <p>💡 ${interpretBeta(beta)}</p></div>`;
+      }
+    }
+
+    function addDetail(c,l,v){const d=document.createElement('div');d.className='detail-item';d.innerHTML=`<div class="detail-label">${l}</div><div class="detail-value">${v}</div>`;c.appendChild(d);}
+
+    document.getElementById('beta-mode-toggle').addEventListener('click',e=>{const btn=e.target.closest('button');if(!btn)return;document.querySelectorAll('#beta-mode-toggle button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');betaMode=btn.dataset.bmode;document.getElementById('direct-panel').classList.toggle('hidden',betaMode!=='direct');document.getElementById('covvar-panel').classList.toggle('hidden',betaMode!=='covvar');});
+    document.getElementById('exam-toggle').addEventListener('click',e=>{const btn=e.target.closest('button');if(!btn)return;document.querySelectorAll('#exam-toggle button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.exam-hide').forEach(el=>el.style.display=btn.dataset.mode==='exam'?'none':'');});
+    document.getElementById('btn-solve').addEventListener('click',solve);
+    document.getElementById('btn-steps').addEventListener('click',function(){const c=document.getElementById('steps-content');c.classList.toggle('hidden');this.textContent=c.classList.contains('hidden')?'▶ Show Steps':'▼ Hide Steps';});
+    document.getElementById('btn-reset').addEventListener('click',()=>{['beta-direct','cov','var-m'].forEach(id=>document.getElementById(id).value='');document.getElementById('result-card').classList.add('hidden');});
+    document.getElementById('btn-example').addEventListener('click',()=>{document.getElementById('beta-direct').value='1.25';});
+    document.getElementById('btn-share').addEventListener('click',()=>navigator.clipboard.writeText(location.href).then(()=>alert('Copied!')));
+  </script>
+</body>
+</html>
