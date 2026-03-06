@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dividend Yield & Capital Gains - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header"><div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div></header>
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Dividend Yield &amp; Capital Gains Yield</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+    <div class="tool-insight">
+      <div class="insight-why"><span class="insight-icon">💡</span><div>
+        <strong>Why This Matters</strong>
+        <p>Total required return breaks into two parts: the income you receive today (dividend yield) and the growth in price you expect over time (capital gains yield). In the Gordon Growth Model, capital gains yield equals g.</p>
+      </div></div>
+      <div class="insight-vars"><div class="insight-var-title">Formulas:</div><ul>
+        <li><strong>r = Dividend Yield + Capital Gains Yield</strong></li>
+        <li><strong>Dividend Yield = D₁ / P₀</strong></li>
+        <li><strong>Capital Gains Yield = g</strong> (for constant growth)</li>
+        <li><strong>r = D₁/P₀ + g</strong></li>
+      </ul></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Inputs</div>
+      <div class="input-grid">
+        <div class="field"><label>Current Price P₀ ($)</label><input type="number" step="any" id="p0" placeholder="e.g. 40.00"></div>
+        <div class="field"><label>Next Dividend D₁ ($) <span style="font-size:.8rem;color:var(--text-muted)">(or enter D₀ + g below)</span></label><input type="number" step="any" id="d1" placeholder="e.g. 2.10"></div>
+        <div class="field"><label>D₀ — Last Paid Dividend ($)</label><input type="number" step="any" id="d0" placeholder="e.g. 2.00"></div>
+        <div class="field"><label>Growth Rate g (%)</label><input type="number" step="any" id="g" placeholder="e.g. 5"></div>
+      </div>
+    </div>
+
+    <button class="btn-calc" id="btn-calc">Calculate</button>
+    <div class="result-card hidden" id="result"></div>
+    <div class="steps-card hidden" id="steps"></div>
+  </main>
+
+  <script src="/js/components.js"></script>
+  <script>
+    document.getElementById('btn-example').addEventListener('click', () => {
+      document.getElementById('p0').value  = '40';
+      document.getElementById('d1').value  = '';
+      document.getElementById('d0').value  = '2.00';
+      document.getElementById('g').value   = '5';
+    });
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      ['p0','d1','d0','g'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('result').classList.add('hidden');
+      document.getElementById('steps').classList.add('hidden');
+    });
+
+    document.getElementById('btn-calc').addEventListener('click', () => {
+      const p0 = parseFloat(document.getElementById('p0').value);
+      let d1   = parseFloat(document.getElementById('d1').value);
+      const d0 = parseFloat(document.getElementById('d0').value);
+      const gPct = parseFloat(document.getElementById('g').value);
+
+      const res   = document.getElementById('result');
+      const steps = document.getElementById('steps');
+      res.className = 'result-card';
+
+      // Compute D₁ from D₀×(1+g) if D₁ not provided
+      let stepsHtml = '';
+      if (isNaN(d1)) {
+        if (isNaN(d0) || isNaN(gPct)) {
+          res.innerHTML = '<span style="color:var(--danger)">⚠ Enter D₁, or both D₀ and g.</span>';
+          res.classList.remove('hidden'); return;
+        }
+        const g = gPct / 100;
+        d1 = d0 * (1 + g);
+        stepsHtml += `<div class="step">D₁ = D₀ × (1 + g) = $${d0.toFixed(2)} × ${(1+g).toFixed(4)} = <strong>$${d1.toFixed(4)}</strong></div>`;
+      }
+      if (isNaN(p0)) {
+        res.innerHTML = '<span style="color:var(--danger)">⚠ Enter current price P₀.</span>';
+        res.classList.remove('hidden'); return;
+      }
+
+      const divYield = d1 / p0;
+      const g = isNaN(gPct) ? null : gPct / 100;
+      const r = g !== null ? divYield + g : null;
+
+      stepsHtml += `<div class="step">Dividend Yield = D₁ / P₀ = $${d1.toFixed(4)} / $${p0.toFixed(2)} = <strong>${(divYield*100).toFixed(4)}%</strong></div>`;
+      if (g !== null) {
+        stepsHtml += `<div class="step">Capital Gains Yield = g = <strong>${gPct}%</strong></div>`;
+        stepsHtml += `<div class="step">Total Return r = ${(divYield*100).toFixed(4)}% + ${gPct}% = <strong>${(r*100).toFixed(4)}%</strong></div>`;
+        res.innerHTML = `
+          <div class="result-primary">r = ${(r*100).toFixed(2)}%</div>
+          <div class="result-sub">Dividend Yield: ${(divYield*100).toFixed(2)}% + Capital Gains: ${gPct}%</div>
+        `;
+      } else {
+        res.innerHTML = `<div class="result-primary">Dividend Yield = ${(divYield*100).toFixed(2)}%</div><div class="result-sub">Enter g to also compute total required return.</div>`;
+      }
+      res.classList.remove('hidden');
+      steps.innerHTML = '<div class="steps-title">Step-by-Step</div>' + stepsHtml;
+      steps.classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>

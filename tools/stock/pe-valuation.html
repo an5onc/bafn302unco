@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>P/E Stock Valuation - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header"><div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div></header>
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>P/E Stock Valuation</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+    <div class="tool-insight">
+      <div class="insight-why"><span class="insight-icon">💡</span><div>
+        <strong>Why This Matters</strong>
+        <p>The P/E method estimates intrinsic value by applying an industry or sector average P/E ratio to the firm's earnings per share. Simple and widely used — especially when dividend data is unavailable.</p>
+      </div></div>
+      <div class="insight-vars"><div class="insight-var-title">Formulas:</div><ul>
+        <li><strong>P₀ = EPS × P/E</strong> — intrinsic value</li>
+        <li><strong>Implied P/E = Market Price / EPS</strong></li>
+        <li><strong>EPS = Net Income / Shares Outstanding</strong></li>
+        <li>Compare intrinsic P₀ to market price to assess over/undervaluation</li>
+      </ul></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Inputs</div>
+      <div class="input-grid">
+        <div class="field"><label>EPS — Earnings Per Share ($)</label><input type="number" step="any" id="eps" placeholder="e.g. 4.00"></div>
+        <div class="field"><label>P/E Ratio (industry/comparable)</label><input type="number" step="any" id="pe" placeholder="e.g. 15"></div>
+        <div class="field"><label>Market Price P (optional, for comparison)</label><input type="number" step="any" id="mktprice" placeholder="e.g. 55.00"></div>
+        <div class="field"><label>Net Income ($M, optional)</label><input type="number" step="any" id="ni" placeholder="e.g. 400"></div>
+        <div class="field"><label>Shares Outstanding (M, optional)</label><input type="number" step="any" id="shares" placeholder="e.g. 100"></div>
+      </div>
+    </div>
+
+    <button class="btn-calc" id="btn-calc">Calculate</button>
+    <div class="result-card hidden" id="result"></div>
+    <div class="steps-card hidden" id="steps"></div>
+  </main>
+
+  <script src="/js/components.js"></script>
+  <script>
+    document.getElementById('btn-example').addEventListener('click', () => {
+      document.getElementById('eps').value      = '4.00';
+      document.getElementById('pe').value       = '15';
+      document.getElementById('mktprice').value = '55.00';
+      document.getElementById('ni').value       = '';
+      document.getElementById('shares').value   = '';
+    });
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      ['eps','pe','mktprice','ni','shares'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('result').classList.add('hidden');
+      document.getElementById('steps').classList.add('hidden');
+    });
+
+    document.getElementById('btn-calc').addEventListener('click', () => {
+      let eps     = parseFloat(document.getElementById('eps').value);
+      const pe    = parseFloat(document.getElementById('pe').value);
+      const mkt   = parseFloat(document.getElementById('mktprice').value);
+      const ni    = parseFloat(document.getElementById('ni').value);
+      const shrs  = parseFloat(document.getElementById('shares').value);
+
+      const res   = document.getElementById('result');
+      const steps = document.getElementById('steps');
+      res.className = 'result-card';
+
+      let stepsHtml = '';
+
+      // Compute EPS from NI/shares if not directly provided
+      if (isNaN(eps) && !isNaN(ni) && !isNaN(shrs)) {
+        eps = ni / shrs;
+        stepsHtml += `<div class="step">EPS = Net Income / Shares = $${ni}M / ${shrs}M = <strong>$${eps.toFixed(2)}</strong></div>`;
+      }
+
+      if (isNaN(eps) || isNaN(pe)) {
+        res.innerHTML = '<span style="color:var(--danger)">⚠ Enter EPS and P/E ratio (or Net Income + Shares to compute EPS).</span>';
+        res.classList.remove('hidden'); return;
+      }
+
+      const intrinsic = eps * pe;
+      stepsHtml += `<div class="step">P₀ = EPS × P/E = $${eps.toFixed(2)} × ${pe} = <strong>$${intrinsic.toFixed(2)}</strong></div>`;
+
+      let comparisonHtml = '';
+      let impliedPE_str = '';
+      if (!isNaN(mkt)) {
+        const diff = mkt - intrinsic;
+        const pct  = (diff / intrinsic) * 100;
+        const overUnder = diff > 0 ? 'overvalued' : diff < 0 ? 'undervalued' : 'fairly valued';
+        const sign = diff > 0 ? '+' : '';
+        const impliedPE = mkt / eps;
+        impliedPE_str = `<div class="result-sub">Implied P/E (market) = $${mkt.toFixed(2)} / $${eps.toFixed(2)} = ${impliedPE.toFixed(2)}</div>`;
+        comparisonHtml = `<div class="result-sub">Market ${sign}$${Math.abs(diff).toFixed(2)} vs intrinsic — appears <strong>${overUnder}</strong> (${sign}${pct.toFixed(1)}%)</div>`;
+        stepsHtml += `<div class="step">Market Price = $${mkt.toFixed(2)}, Difference = $${mkt.toFixed(2)} − $${intrinsic.toFixed(2)} = $${diff.toFixed(2)} → ${overUnder}</div>`;
+      }
+
+      res.innerHTML = `
+        <div class="result-primary">P₀ = $${intrinsic.toFixed(2)}</div>
+        <div class="result-sub">Intrinsic value at P/E = ${pe}</div>
+        ${impliedPE_str}
+        ${comparisonHtml}
+      `;
+      res.classList.remove('hidden');
+      steps.innerHTML = '<div class="steps-title">Step-by-Step</div>' + stepsHtml;
+      steps.classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>

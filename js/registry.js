@@ -156,4 +156,25 @@ const TOOL_REGISTRY = [
     category: 'Capital Structure',
     path: '/tools/wacc.html'
   }
+  ,{
+    id: 'gordon-growth',
+    title: 'Gordon Growth Model',
+    description: 'P₀ = D₁ / (r − g). Constant-growth stock price or required return. Dividend growth model for steady-state firms.',
+    category: 'Stock Valuation (Ch. 9)',
+    path: '/tools/stock/gordon-growth.html'
+  }
+  ,{
+    id: 'dividend-yield',
+    title: 'Dividend Yield & Capital Gains',
+    description: 'Break required return into dividend yield and capital gains yield. Reinforces r = D₁/P₀ + g.',
+    category: 'Stock Valuation (Ch. 9)',
+    path: '/tools/stock/dividend-yield.html'
+  }
+  ,{
+    id: 'pe-valuation',
+    title: 'P/E Stock Valuation',
+    description: 'Estimate intrinsic value using P/E ratio. P₀ = EPS × (P/E). Compare to market price.',
+    category: 'Stock Valuation (Ch. 9)',
+    path: '/tools/stock/pe-valuation.html'
+  }
 ];

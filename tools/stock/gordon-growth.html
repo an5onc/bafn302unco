@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Gordon Growth Model - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header"><div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div></header>
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Gordon Growth Model (Dividend Discount)</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+    <div class="tool-insight">
+      <div class="insight-why"><span class="insight-icon">💡</span><div>
+        <strong>Why This Matters</strong>
+        <p>The Gordon Growth Model (Constant Growth DDM) values a stock as the present value of all future dividends growing at a constant rate. It's the foundation of intrinsic value analysis for dividend-paying firms.</p>
+      </div></div>
+      <div class="insight-vars"><div class="insight-var-title">Formulas:</div><ul>
+        <li><strong>P₀ = D₁ / (r − g)</strong> — intrinsic stock price</li>
+        <li><strong>D₁ = D₀ × (1 + g)</strong> — next dividend</li>
+        <li><strong>r = D₁/P₀ + g</strong> — required return</li>
+        <li><strong>g = r − D₁/P₀</strong> — implied growth rate</li>
+        <li><em>r must be &gt; g, and both must be positive</em></li>
+      </ul></div>
+    </div>
+
+    <div class="mode-switch" id="solve-toggle" style="margin-bottom:1rem">
+      <button class="active" data-mode="price">Solve for P₀</button>
+      <button data-mode="r">Solve for r</button>
+      <button data-mode="g">Solve for g</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Inputs</div>
+      <div class="input-grid">
+        <div class="field"><label>D₀ — Current Dividend ($)</label><input type="number" step="any" id="d0" placeholder="e.g. 2.00"></div>
+        <div class="field"><label>Growth Rate g (%)</label><input type="number" step="any" id="g" placeholder="e.g. 5"></div>
+        <div class="field"><label>Required Return r (%) <span class="solve-for-r hidden" style="color:var(--accent)">[SOLVING FOR THIS]</span></label><input type="number" step="any" id="r" placeholder="e.g. 10"></div>
+        <div class="field"><label>Current Price P₀ ($) <span class="solve-for-price hidden" style="color:var(--accent)">[SOLVING FOR THIS]</span></label><input type="number" step="any" id="p0" placeholder="e.g. 40.00"></div>
+      </div>
+    </div>
+
+    <button class="btn-calc" id="btn-calc">Calculate</button>
+
+    <div class="result-card hidden" id="result"></div>
+    <div class="steps-card hidden" id="steps"></div>
+  </main>
+
+  <script src="/js/components.js"></script>
+  <script>
+    let mode = 'price';
+
+    document.querySelectorAll('#solve-toggle button').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('#solve-toggle button').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        mode = this.dataset.mode;
+        updateLabels();
+        document.getElementById('result').classList.add('hidden');
+        document.getElementById('steps').classList.add('hidden');
+      });
+    });
+
+    function updateLabels() {
+      document.querySelector('.solve-for-r').classList.toggle('hidden', mode !== 'r');
+      document.querySelector('.solve-for-price').classList.toggle('hidden', mode !== 'price');
+      document.getElementById('r').disabled = mode === 'r';
+      document.getElementById('p0').disabled = mode === 'price';
+    }
+    updateLabels();
+
+    document.getElementById('btn-example').addEventListener('click', () => {
+      document.getElementById('d0').value = '2.00';
+      document.getElementById('g').value  = '5';
+      document.getElementById('r').value  = '10';
+      document.getElementById('p0').value = '';
+      mode = 'price';
+      document.querySelectorAll('#solve-toggle button').forEach((b,i) => b.classList.toggle('active', i===0));
+      updateLabels();
+    });
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      ['d0','g','r','p0'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('result').classList.add('hidden');
+      document.getElementById('steps').classList.add('hidden');
+    });
+
+    document.getElementById('btn-calc').addEventListener('click', calculate);
+
+    function fmt(n, dec=2) { return n.toFixed(dec); }
+    function fmtPct(n) { return fmt(n,4) + '%'; }
+
+    function calculate() {
+      const d0 = parseFloat(document.getElementById('d0').value);
+      const gPct = parseFloat(document.getElementById('g').value);
+      const rPct = parseFloat(document.getElementById('r').value);
+      const p0In = parseFloat(document.getElementById('p0').value);
+
+      const res = document.getElementById('result');
+      const steps = document.getElementById('steps');
+      res.className = 'result-card';
+      steps.className = 'steps-card';
+
+      if (isNaN(d0) || isNaN(gPct)) {
+        res.innerHTML = '<span style="color:var(--danger)">⚠ Enter D₀ and g to continue.</span>';
+        res.classList.remove('hidden');
+        return;
+      }
+
+      const g = gPct / 100;
+      const d1 = d0 * (1 + g);
+      let stepsHtml = `<div class="step">Step 1: D₁ = D₀ × (1 + g) = $${fmt(d0)} × ${fmt(1+g,4)} = <strong>$${fmt(d1)}</strong></div>`;
+
+      if (mode === 'price') {
+        if (isNaN(rPct)) {
+          res.innerHTML = '<span style="color:var(--danger)">⚠ Enter required return r.</span>';
+          res.classList.remove('hidden'); return;
+        }
+        const r = rPct / 100;
+        if (r <= g) {
+          res.innerHTML = '<span style="color:var(--danger)">⚠ r must be greater than g for the model to work.</span>';
+          res.classList.remove('hidden'); return;
+        }
+        const price = d1 / (r - g);
+        stepsHtml += `<div class="step">Step 2: P₀ = D₁ / (r − g) = $${fmt(d1)} / (${fmtPct(r*100)} − ${fmtPct(gPct)}) = $${fmt(d1)} / ${fmtPct((r-g)*100)}</div>`;
+        stepsHtml += `<div class="step">P₀ = <strong>$${fmt(price)}</strong></div>`;
+        res.innerHTML = `<div class="result-primary">P₀ = $${fmt(price)}</div><div class="result-sub">Intrinsic stock value at constant growth g = ${gPct}%</div>`;
+      } else if (mode === 'r') {
+        if (isNaN(p0In)) {
+          res.innerHTML = '<span style="color:var(--danger)">⚠ Enter current price P₀.</span>';
+          res.classList.remove('hidden'); return;
+        }
+        const r = (d1 / p0In) + g;
+        const divYield = d1 / p0In;
+        stepsHtml += `<div class="step">Step 2: r = D₁/P₀ + g = $${fmt(d1)} / $${fmt(p0In)} + ${fmtPct(gPct)} = ${fmtPct(divYield*100)} + ${fmtPct(gPct)}</div>`;
+        stepsHtml += `<div class="step">r = <strong>${fmtPct(r*100)}</strong></div>`;
+        res.innerHTML = `<div class="result-primary">r = ${fmt(r*100,2)}%</div><div class="result-sub">Dividend Yield: ${fmt(divYield*100,2)}% + Capital Gains: ${gPct}%</div>`;
+      } else if (mode === 'g') {
+        if (isNaN(rPct) || isNaN(p0In)) {
+          res.innerHTML = '<span style="color:var(--danger)">⚠ Enter both r and P₀.</span>';
+          res.classList.remove('hidden'); return;
+        }
+        const r = rPct / 100;
+        // P₀ = D₁/(r-g) → r-g = D₁/P₀ → g = r - D₁/P₀
+        const gImplied = r - (d1 / p0In);
+        stepsHtml += `<div class="step">Step 2: g = r − D₁/P₀ = ${fmtPct(rPct)} − ($${fmt(d1)} / $${fmt(p0In)}) = ${fmtPct(rPct)} − ${fmtPct((d1/p0In)*100)}</div>`;
+        stepsHtml += `<div class="step">g = <strong>${fmtPct(gImplied*100)}</strong></div>`;
+        res.innerHTML = `<div class="result-primary">g = ${fmt(gImplied*100,2)}%</div><div class="result-sub">Implied constant growth rate given P₀ = $${fmt(p0In)} and r = ${rPct}%</div>`;
+      }
+
+      res.classList.remove('hidden');
+      steps.innerHTML = '<div class="steps-title">Step-by-Step</div>' + stepsHtml;
+      steps.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>

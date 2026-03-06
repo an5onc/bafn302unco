@@ -18,6 +18,7 @@
   --cat-cf:#10b981;
   --cat-rates:#f59e0b;
   --cat-bonds:#8b5cf6;
+  --cat-stocks:#10b981;
 
   /* Surfaces */
   --bg:#f1f5f9;
@@ -212,7 +213,8 @@ a:hover{text-decoration:underline}
 .cat-tvm   { --card-accent: var(--cat-tvm) }
 .cat-cf    { --card-accent: var(--cat-cf) }
 .cat-rates { --card-accent: var(--cat-rates) }
-.cat-bonds { --card-accent: var(--cat-bonds) }
+.cat-bonds  { --card-accent: var(--cat-bonds) }
+.cat-stocks { --card-accent: var(--cat-stocks) }
 
 /* ===== Tool Page Layout ===== */
 .tool-topbar{
