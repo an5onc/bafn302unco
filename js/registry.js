@@ -149,4 +149,11 @@ const TOOL_REGISTRY = [
     category: 'Risk & Return (Ch. 8)',
     path: '/tools/risk/capm.html'
   }
+  ,{
+    id: 'wacc',
+    title: 'WACC',
+    description: 'Weighted Average Cost of Capital. Blends cost of equity and after-tax cost of debt by market-value weights. The firm's hurdle rate.',
+    category: 'Capital Structure',
+    path: '/tools/wacc.html'
+  }
 ];

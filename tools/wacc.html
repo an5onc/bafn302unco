@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>WACC Calculator - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/calculator.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div>
+  </header>
+
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>WACC — Weighted Average Cost of Capital</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="tool-insight">
+      <div class="insight-why">
+        <span class="insight-icon">💡</span>
+        <div>
+          <strong>Why This Matters</strong>
+          <p>WACC is the <em>hurdle rate</em> a firm must beat with any investment. It blends the cost of debt and equity, weighted by their proportions in the capital structure, after accounting for the tax deductibility of interest. A project with NPV > 0 at WACC creates shareholder value; NPV &lt; 0 destroys it.</p>
+        </div>
+      </div>
+      <div class="insight-vars">
+        <div class="insight-var-title">What each input means:</div>
+        <ul>
+          <li><strong>Market Value of Equity (E)</strong> — Total equity market cap (shares × price)</li>
+          <li><strong>Market Value of Debt (D)</strong> — Total market value of all interest-bearing debt</li>
+          <li><strong>Cost of Equity (rₑ)</strong> — Required return for equity investors (use CAPM: rf + β·MRP)</li>
+          <li><strong>Pre-Tax Cost of Debt (rᵈ)</strong> — YTM on existing debt (not coupon rate)</li>
+          <li><strong>Tax Rate (T)</strong> — Marginal corporate tax rate (interest expense is tax-deductible)</li>
+        </ul>
+        <p style="margin-top:0.5rem"><strong>Formula:</strong> WACC = (E/V)·rₑ + (D/V)·rᵈ·(1 − T), where V = E + D</p>
+      </div>
+    </div>
+
+    <div class="card" id="inputs-card">
+      <div class="card-title">Capital Structure</div>
+      <div class="input-grid">
+        <div class="field">
+          <label>Market Value of Equity, E <span class="tip" data-tip="Shares outstanding × current stock price">?</span></label>
+          <input type="number" step="any" id="equity" placeholder="e.g. 6000000">
+        </div>
+        <div class="field">
+          <label>Market Value of Debt, D <span class="tip" data-tip="Total interest-bearing debt at market value">?</span></label>
+          <input type="number" step="any" id="debt" placeholder="e.g. 4000000">
+        </div>
+      </div>
+
+      <div class="card-title" style="margin-top:1.25rem">Costs</div>
+      <div class="input-grid">
+        <div class="field">
+          <label>Cost of Equity, rₑ (%) <span class="tip" data-tip="Use CAPM or DDM to find this">?</span></label>
+          <input type="number" step="any" id="re" placeholder="e.g. 12.5">
+        </div>
+        <div class="field">
+          <label>Pre-Tax Cost of Debt, rᵈ (%) <span class="tip" data-tip="YTM on existing debt, not coupon rate">?</span></label>
+          <input type="number" step="any" id="rd" placeholder="e.g. 8.0">
+        </div>
+        <div class="field">
+          <label>Marginal Tax Rate, T (%) <span class="tip" data-tip="Federal + state corporate tax rate">?</span></label>
+          <input type="number" step="any" id="tax" placeholder="e.g. 21">
+        </div>
+      </div>
+
+      <button class="btn-calc" id="btn-calc">Calculate WACC</button>
+    </div>
+
+    <!-- Results -->
+    <div class="card" id="results-card" style="display:none">
+      <div class="card-title">Results</div>
+
+      <div class="result-grid" id="result-grid"></div>
+
+      <div class="step-block" id="step-block"></div>
+    </div>
+
+    <!-- HP 10bII+ Note -->
+    <div class="card hp-card">
+      <div class="card-title">HP 10bII+ — No Direct WACC Key</div>
+      <p>WACC is a manual formula. Use your calculator for the component rates (CAPM for rₑ, YTM for rᵈ), then punch in:</p>
+      <pre class="hp-steps">
+1. Compute weights:  w_E = E ÷ (E + D)    w_D = D ÷ (E + D)
+2. After-tax rᵈ:    rd_at = rᵈ × (1 − T)
+3. WACC:            WACC = w_E × rₑ + w_D × rd_at</pre>
+      <p style="margin-top:0.5rem;font-size:0.85rem;color:var(--c-muted)">All rates should be in decimal form when calculating manually (e.g. 12.5% → 0.125).</p>
+    </div>
+  </main>
+
+  <script>
+    // ── Tooltip
+    document.querySelectorAll('.tip').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        const tip = document.createElement('div');
+        tip.className = 'tooltip-popup';
+        tip.textContent = el.dataset.tip;
+        document.body.appendChild(tip);
+        const r = el.getBoundingClientRect();
+        tip.style.top = (r.bottom + window.scrollY + 6) + 'px';
+        tip.style.left = (r.left + window.scrollX) + 'px';
+        el._tip = tip;
+      });
+      el.addEventListener('mouseleave', () => { el._tip && el._tip.remove(); });
+    });
+
+    // ── Example
+    document.getElementById('btn-example').addEventListener('click', () => {
+      document.getElementById('equity').value = 6000000;
+      document.getElementById('debt').value = 4000000;
+      document.getElementById('re').value = 12.5;
+      document.getElementById('rd').value = 8.0;
+      document.getElementById('tax').value = 21;
+    });
+
+    // ── Reset
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      ['equity','debt','re','rd','tax'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('results-card').style.display = 'none';
+    });
+
+    // ── Calculate
+    document.getElementById('btn-calc').addEventListener('click', calculate);
+
+    function fmt(n, d = 4) { return n.toFixed(d); }
+    function pct(n, d = 4) { return (n * 100).toFixed(d) + '%'; }
+
+    function calculate() {
+      const E   = parseFloat(document.getElementById('equity').value);
+      const D   = parseFloat(document.getElementById('debt').value);
+      const re  = parseFloat(document.getElementById('re').value) / 100;
+      const rd  = parseFloat(document.getElementById('rd').value) / 100;
+      const tax = parseFloat(document.getElementById('tax').value) / 100;
+
+      if ([E, D, re, rd, tax].some(isNaN)) {
+        alert('Please fill in all fields.'); return;
+      }
+      if (E < 0 || D < 0) { alert('Equity and Debt must be non-negative.'); return; }
+      if (tax < 0 || tax >= 1) { alert('Tax rate must be between 0% and 99%.'); return; }
+
+      const V    = E + D;
+      const wE   = E / V;
+      const wD   = D / V;
+      const rdAt = rd * (1 - tax);
+      const wacc = wE * re + wD * rdAt;
+
+      // Results grid
+      const grid = document.getElementById('result-grid');
+      grid.innerHTML = `
+        <div class="res-item res-primary"><div class="res-label">WACC</div><div class="res-value">${(wacc * 100).toFixed(4)}%</div></div>
+        <div class="res-item"><div class="res-label">Total Value (V = E + D)</div><div class="res-value">$${V.toLocaleString()}</div></div>
+        <div class="res-item"><div class="res-label">Equity Weight (wₑ)</div><div class="res-value">${(wE * 100).toFixed(2)}%</div></div>
+        <div class="res-item"><div class="res-label">Debt Weight (wᵈ)</div><div class="res-value">${(wD * 100).toFixed(2)}%</div></div>
+        <div class="res-item"><div class="res-label">After-Tax Cost of Debt</div><div class="res-value">${(rdAt * 100).toFixed(4)}%</div></div>
+        <div class="res-item"><div class="res-label">Equity Component</div><div class="res-value">${(wE * re * 100).toFixed(4)}%</div></div>
+        <div class="res-item"><div class="res-label">Debt Component</div><div class="res-value">${(wD * rdAt * 100).toFixed(4)}%</div></div>
+      `;
+
+      // Step-by-step
+      const steps = document.getElementById('step-block');
+      steps.innerHTML = `
+        <div class="step-title">Step-by-Step</div>
+        <div class="step">
+          <span class="step-num">1</span>
+          <span>V = E + D = $${E.toLocaleString()} + $${D.toLocaleString()} = <strong>$${V.toLocaleString()}</strong></span>
+        </div>
+        <div class="step">
+          <span class="step-num">2</span>
+          <span>wₑ = E/V = ${E.toLocaleString()} / ${V.toLocaleString()} = <strong>${fmt(wE)}</strong> (${(wE*100).toFixed(2)}%)</span>
+        </div>
+        <div class="step">
+          <span class="step-num">3</span>
+          <span>wᵈ = D/V = ${D.toLocaleString()} / ${V.toLocaleString()} = <strong>${fmt(wD)}</strong> (${(wD*100).toFixed(2)}%)</span>
+        </div>
+        <div class="step">
+          <span class="step-num">4</span>
+          <span>After-tax rᵈ = rᵈ × (1 − T) = ${(rd*100).toFixed(2)}% × (1 − ${(tax*100).toFixed(2)}%) = <strong>${(rdAt*100).toFixed(4)}%</strong></span>
+        </div>
+        <div class="step">
+          <span class="step-num">5</span>
+          <span>WACC = wₑ·rₑ + wᵈ·rᵈ(1−T)</span>
+        </div>
+        <div class="step">
+          <span class="step-num"> </span>
+          <span>= (${fmt(wE)} × ${(re*100).toFixed(2)}%) + (${fmt(wD)} × ${(rdAt*100).toFixed(4)}%)</span>
+        </div>
+        <div class="step">
+          <span class="step-num"> </span>
+          <span>= ${(wE*re*100).toFixed(4)}% + ${(wD*rdAt*100).toFixed(4)}% = <strong class="res-primary">${(wacc*100).toFixed(4)}%</strong></span>
+        </div>
+      `;
+
+      document.getElementById('results-card').style.display = '';
+    }
+  </script>
+</body>
+</html>
