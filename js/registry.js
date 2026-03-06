@@ -152,7 +152,7 @@ const TOOL_REGISTRY = [
   ,{
     id: 'wacc',
     title: 'WACC',
-    description: 'Weighted Average Cost of Capital. Blends cost of equity and after-tax cost of debt by market-value weights. The firm's hurdle rate.',
+    description: 'Weighted Average Cost of Capital. Blends cost of equity and after-tax cost of debt by market-value weights. The firm\'s hurdle rate.',
     category: 'Capital Structure',
     path: '/tools/wacc.html'
   }
