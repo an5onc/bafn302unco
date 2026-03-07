@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Break-Even Analysis - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header"><div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div></header>
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Break-Even Analysis</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="tool-insight">
+      <div class="insight-why"><span class="insight-icon">💡</span><div>
+        <strong>Why This Matters</strong>
+        <p>Break-even analysis tells you how many units (or dollars of sales) you need to cover all costs. Below break-even → losses. Above → profits. Operating leverage determines how fast profits grow once you clear the break-even point.</p>
+      </div></div>
+      <div class="insight-vars"><div class="insight-var-title">Key Formulas:</div><ul>
+        <li><strong>Q_BE</strong> = FC / (P − VC) &nbsp; units</li>
+        <li><strong>S_BE</strong> = FC / CM Ratio &nbsp; dollars</li>
+        <li><strong>CM Ratio</strong> = (P − VC) / P</li>
+        <li><strong>DOL</strong> = Q(P−VC) / [Q(P−VC) − FC]</li>
+        <li><strong>% ΔProfit</strong> ≈ DOL × % ΔSales</li>
+      </ul></div>
+    </div>
+
+    <div class="mode-switch" id="exam-toggle">
+      <button class="active" data-mode="normal">Normal Mode</button>
+      <button data-mode="exam">Exam Mode</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Inputs</div>
+      <div class="input-grid">
+        <div class="field">
+          <label>Fixed Costs (FC) <span class="var-label">total per period</span></label>
+          <input type="number" step="any" id="fc" placeholder="e.g. 120000">
+        </div>
+        <div class="field">
+          <label>Selling Price per Unit (P) <span class="var-label">$/unit</span></label>
+          <input type="number" step="any" id="price" placeholder="e.g. 50">
+        </div>
+        <div class="field">
+          <label>Variable Cost per Unit (VC) <span class="var-label">$/unit</span></label>
+          <input type="number" step="any" id="vc" placeholder="e.g. 30">
+        </div>
+        <div class="field">
+          <label>Current Units Sold (Q) <span class="var-label">optional — for DOL</span></label>
+          <input type="number" step="any" id="qty" placeholder="e.g. 8000">
+        </div>
+        <div class="field">
+          <label>% Change in Sales <span class="var-label">optional — for profit sensitivity</span></label>
+          <input type="number" step="any" id="pct-sales" placeholder="e.g. 10">
+        </div>
+      </div>
+      <button class="btn" id="btn-calc">Calculate</button>
+    </div>
+
+    <div class="card" id="result-card" style="display:none">
+      <div class="card-title">Results</div>
+      <div id="results-grid" class="results-row"></div>
+      <div id="steps-block" style="display:none" class="steps-block"></div>
+      <button class="btn-sm" id="btn-steps" style="margin-top:.75rem">Show Steps</button>
+    </div>
+
+    <div class="card" id="share-card" style="display:none;margin-top:1rem">
+      <div class="card-title">Share</div>
+      <input type="text" id="share-url" readonly class="share-input">
+      <button class="btn-sm" id="btn-copy">Copy Link</button>
+    </div>
+  </main>
+
+<script>
+(function() {
+  // --- Exam mode toggle ---
+  const examToggle = document.getElementById('exam-toggle');
+  let examMode = false;
+  examToggle.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      examMode = btn.dataset.mode === 'exam';
+      examToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+
+  // --- Load example ---
+  document.getElementById('btn-example').addEventListener('click', () => {
+    document.getElementById('fc').value = '120000';
+    document.getElementById('price').value = '50';
+    document.getElementById('vc').value = '30';
+    document.getElementById('qty').value = '8000';
+    document.getElementById('pct-sales').value = '10';
+  });
+
+  // --- Reset ---
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    ['fc','price','vc','qty','pct-sales'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('result-card').style.display = 'none';
+    document.getElementById('share-card').style.display = 'none';
+  });
+
+  // --- Steps toggle ---
+  let stepsVisible = false;
+  document.getElementById('btn-steps').addEventListener('click', () => {
+    stepsVisible = !stepsVisible;
+    document.getElementById('steps-block').style.display = stepsVisible ? 'block' : 'none';
+    document.getElementById('btn-steps').textContent = stepsVisible ? 'Hide Steps' : 'Show Steps';
+  });
+
+  // --- Calculate ---
+  document.getElementById('btn-calc').addEventListener('click', calculate);
+
+  function fmt(n, dec=2) { return Number(n).toFixed(dec); }
+  function fmtMoney(n) { return '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+  function calculate() {
+    const fc   = parseFloat(document.getElementById('fc').value);
+    const P    = parseFloat(document.getElementById('price').value);
+    const vc   = parseFloat(document.getElementById('vc').value);
+    const qty  = parseFloat(document.getElementById('qty').value) || null;
+    const pctS = parseFloat(document.getElementById('pct-sales').value) || null;
+
+    if (isNaN(fc) || isNaN(P) || isNaN(vc)) {
+      alert('Please enter Fixed Costs, Selling Price, and Variable Cost.');
+      return;
+    }
+    if (P <= vc) { alert('Selling Price must be greater than Variable Cost.'); return; }
+
+    const cm     = P - vc;           // contribution margin per unit
+    const cmRatio = cm / P;           // CM ratio
+    const qBE    = fc / cm;           // break-even units
+    const sBE    = fc / cmRatio;      // break-even sales $
+
+    let dolVal = null, pctProfit = null;
+    if (qty !== null) {
+      const totalCM = qty * cm;
+      const profit  = totalCM - fc;
+      dolVal = totalCM / (totalCM - fc);
+      if (pctS !== null && profit !== 0) {
+        pctProfit = dolVal * pctS;
+      }
+    }
+
+    // Render results
+    const grid = document.getElementById('results-grid');
+    const rows = [
+      { label: 'Contribution Margin / Unit', value: fmtMoney(cm), note: 'P − VC' },
+      { label: 'CM Ratio', value: fmt(cmRatio * 100, 2) + '%', note: '(P−VC)/P' },
+      { label: 'Break-Even (units)', value: fmt(qBE, 0) + ' units', note: 'FC / CM', highlight: true },
+      { label: 'Break-Even (sales $)', value: fmtMoney(sBE), note: 'FC / CM Ratio', highlight: true },
+    ];
+    if (dolVal !== null) {
+      rows.push({ label: 'Degree of Operating Leverage (DOL)', value: fmt(dolVal, 3) + 'x', note: 'at Q=' + qty.toLocaleString(), highlight: true });
+    }
+    if (pctProfit !== null) {
+      rows.push({ label: '% Change in Profit', value: fmt(pctProfit, 2) + '%', note: 'DOL × ' + fmt(pctS, 1) + '% sales change' });
+    }
+
+    grid.innerHTML = rows.map(r => `
+      <div class="result-item${r.highlight ? ' result-highlight' : ''}">
+        <div class="result-label">${r.label}${r.note ? '<span class="result-note">' + r.note + '</span>' : ''}</div>
+        <div class="result-value">${r.value}</div>
+      </div>
+    `).join('');
+
+    // Steps
+    const stepsBlock = document.getElementById('steps-block');
+    stepsBlock.innerHTML = `
+      <ol class="steps-list">
+        <li><strong>CM per unit</strong> = P − VC = ${fmtMoney(P)} − ${fmtMoney(vc)} = <strong>${fmtMoney(cm)}</strong></li>
+        <li><strong>CM Ratio</strong> = CM / P = ${fmtMoney(cm)} / ${fmtMoney(P)} = <strong>${fmt(cmRatio*100,2)}%</strong></li>
+        <li><strong>Q_BE</strong> = FC / CM = ${fmtMoney(fc)} / ${fmtMoney(cm)} = <strong>${fmt(qBE,2)} units</strong> → round up to ${Math.ceil(qBE)} units</li>
+        <li><strong>S_BE</strong> = FC / CM Ratio = ${fmtMoney(fc)} / ${fmt(cmRatio,4)} = <strong>${fmtMoney(sBE)}</strong></li>
+        ${dolVal !== null ? `<li><strong>DOL</strong> = Q×CM / (Q×CM − FC) = ${fmtMoney(qty*cm)} / (${fmtMoney(qty*cm)} − ${fmtMoney(fc)}) = <strong>${fmt(dolVal,3)}x</strong></li>` : ''}
+        ${pctProfit !== null ? `<li><strong>% ΔProfit</strong> = DOL × % ΔSales = ${fmt(dolVal,3)} × ${fmt(pctS,1)}% = <strong>${fmt(pctProfit,2)}%</strong></li>` : ''}
+      </ol>
+    `;
+
+    document.getElementById('result-card').style.display = 'block';
+
+    // Share link
+    const params = new URLSearchParams({ fc, P, vc });
+    if (qty) params.set('qty', qty);
+    if (pctS) params.set('pctS', pctS);
+    document.getElementById('share-url').value = location.origin + location.pathname + '?' + params.toString();
+    document.getElementById('share-card').style.display = 'block';
+    if (!stepsVisible) { document.getElementById('steps-block').style.display = 'none'; }
+  }
+
+  // Copy link
+  document.getElementById('btn-copy').addEventListener('click', () => {
+    navigator.clipboard.writeText(document.getElementById('share-url').value);
+    document.getElementById('btn-copy').textContent = 'Copied!';
+    setTimeout(() => document.getElementById('btn-copy').textContent = 'Copy Link', 2000);
+  });
+
+  // Load from URL params
+  const sp = new URLSearchParams(location.search);
+  if (sp.get('fc')) { document.getElementById('fc').value = sp.get('fc'); }
+  if (sp.get('P'))  { document.getElementById('price').value = sp.get('P'); }
+  if (sp.get('vc')) { document.getElementById('vc').value = sp.get('vc'); }
+  if (sp.get('qty')) { document.getElementById('qty').value = sp.get('qty'); }
+  if (sp.get('pctS')) { document.getElementById('pct-sales').value = sp.get('pctS'); }
+  if (sp.get('fc') && sp.get('P') && sp.get('vc')) calculate();
+})();
+</script>
+</body>
+</html>

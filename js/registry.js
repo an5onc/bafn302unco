@@ -177,4 +177,11 @@ const TOOL_REGISTRY = [
     category: 'Stock Valuation (Ch. 9)',
     path: '/tools/stock/pe-valuation.html'
   }
+  ,{
+    id: 'breakeven',
+    title: 'Break-Even Analysis',
+    description: 'Units and sales-dollar break-even from fixed costs, price, and variable cost. Includes CM ratio, DOL, and profit sensitivity.',
+    category: 'Capital Budgeting',
+    path: '/tools/capital/breakeven.html'
+  }
 ];
