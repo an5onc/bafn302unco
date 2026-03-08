@@ -184,4 +184,11 @@ const TOOL_REGISTRY = [
     category: 'Capital Budgeting',
     path: '/tools/capital/breakeven.html'
   }
+  ,{
+    id: 'payback',
+    title: 'Payback Period',
+    description: 'Simple and discounted payback period. How long to recover initial investment from project cash flows. Compare against required payback.',
+    category: 'Capital Budgeting',
+    path: '/tools/capital/payback.html'
+  }
 ];

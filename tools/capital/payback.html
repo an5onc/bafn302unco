@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Payback Period - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header"><div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div></header>
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Payback Period</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="tool-insight">
+      <div class="insight-why"><span class="insight-icon">💡</span><div>
+        <strong>Why This Matters</strong>
+        <p>Payback period measures how long it takes to recover your initial investment from project cash flows. Simple payback ignores time value of money; discounted payback accounts for it using your discount rate. Shorter payback = faster capital recovery = lower risk.</p>
+      </div></div>
+      <div class="insight-vars"><div class="insight-var-title">Key Concepts:</div><ul>
+        <li><strong>Simple Payback</strong> = Years to recover I₀ from undiscounted cash flows</li>
+        <li><strong>Discounted Payback</strong> = Years to recover I₀ from PV of cash flows</li>
+        <li><strong>Decision Rule</strong>: Accept if Payback ≤ Required Payback Period</li>
+        <li><strong>Limitation</strong>: Ignores cash flows after payback; biased against long-term projects</li>
+      </ul></div>
+    </div>
+
+    <div class="mode-switch" id="mode-toggle">
+      <button class="active" data-mode="simple">Simple Payback</button>
+      <button data-mode="discounted">Discounted Payback</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Inputs</div>
+      <div class="input-grid">
+        <div class="field">
+          <label>Initial Investment (I₀) <span class="var-label">positive number</span></label>
+          <input type="number" step="any" id="initial" placeholder="e.g. 100000">
+        </div>
+        <div class="field" id="discount-field" style="display:none">
+          <label>Discount Rate (r) <span class="var-label">% per year</span></label>
+          <input type="number" step="any" id="discount" placeholder="e.g. 10">
+        </div>
+        <div class="field">
+          <label>Required Payback <span class="var-label">optional — years</span></label>
+          <input type="number" step="any" id="required" placeholder="e.g. 3">
+        </div>
+      </div>
+
+      <div class="card-title" style="margin-top:1.5rem">Annual Cash Flows</div>
+      <div id="cf-container">
+        <div class="cf-row" data-year="1">
+          <label>Year 1:</label>
+          <input type="number" step="any" class="cf-input" placeholder="e.g. 30000">
+          <button class="btn-remove" style="visibility:hidden">✕</button>
+        </div>
+      </div>
+      <button class="btn-sm" id="btn-add-cf">+ Add Year</button>
+      <button class="btn" id="btn-calc" style="margin-top:1rem">Calculate</button>
+    </div>
+
+    <div class="card" id="result-card" style="display:none">
+      <div class="card-title">Results</div>
+      <div id="results-grid" class="results-row"></div>
+      <div id="table-container" style="margin-top:1.5rem"></div>
+      <div id="steps-block" style="display:none" class="steps-block"></div>
+      <button class="btn-sm" id="btn-steps" style="margin-top:.75rem">Show Steps</button>
+    </div>
+
+    <div class="card" id="share-card" style="display:none;margin-top:1rem">
+      <div class="card-title">Share</div>
+      <input type="text" id="share-url" readonly class="share-input">
+      <button class="btn-sm" id="btn-copy">Copy Link</button>
+    </div>
+  </main>
+
+<script>
+(function() {
+  // --- Mode toggle ---
+  const modeToggle = document.getElementById('mode-toggle');
+  const discountField = document.getElementById('discount-field');
+  let isDiscounted = false;
+
+  modeToggle.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      isDiscounted = btn.dataset.mode === 'discounted';
+      modeToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      discountField.style.display = isDiscounted ? 'block' : 'none';
+    });
+  });
+
+  // --- Cash flow management ---
+  const cfContainer = document.getElementById('cf-container');
+  let yearCount = 1;
+
+  document.getElementById('btn-add-cf').addEventListener('click', () => {
+    yearCount++;
+    const row = document.createElement('div');
+    row.className = 'cf-row';
+    row.dataset.year = yearCount;
+    row.innerHTML = `
+      <label>Year ${yearCount}:</label>
+      <input type="number" step="any" class="cf-input" placeholder="e.g. 30000">
+      <button class="btn-remove">✕</button>
+    `;
+    cfContainer.appendChild(row);
+
+    row.querySelector('.btn-remove').addEventListener('click', () => {
+      row.remove();
+      renumberYears();
+    });
+  });
+
+  function renumberYears() {
+    const rows = cfContainer.querySelectorAll('.cf-row');
+    yearCount = rows.length;
+    rows.forEach((row, idx) => {
+      const year = idx + 1;
+      row.dataset.year = year;
+      row.querySelector('label').textContent = `Year ${year}:`;
+      row.querySelector('.btn-remove').style.visibility = rows.length > 1 ? 'visible' : 'hidden';
+    });
+  }
+
+  // --- Load example ---
+  document.getElementById('btn-example').addEventListener('click', () => {
+    document.getElementById('initial').value = '100000';
+    document.getElementById('discount').value = '10';
+    document.getElementById('required').value = '3';
+
+    // Clear existing CFs and add example
+    cfContainer.innerHTML = '';
+    yearCount = 0;
+    const exampleCFs = [30000, 40000, 35000, 25000, 20000];
+    exampleCFs.forEach((cf, idx) => {
+      yearCount++;
+      const row = document.createElement('div');
+      row.className = 'cf-row';
+      row.dataset.year = yearCount;
+      row.innerHTML = `
+        <label>Year ${yearCount}:</label>
+        <input type="number" step="any" class="cf-input" value="${cf}">
+        <button class="btn-remove">✕</button>
+      `;
+      cfContainer.appendChild(row);
+      row.querySelector('.btn-remove').addEventListener('click', () => {
+        row.remove();
+        renumberYears();
+      });
+    });
+    renumberYears();
+  });
+
+  // --- Reset ---
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    document.getElementById('initial').value = '';
+    document.getElementById('discount').value = '';
+    document.getElementById('required').value = '';
+    cfContainer.innerHTML = `
+      <div class="cf-row" data-year="1">
+        <label>Year 1:</label>
+        <input type="number" step="any" class="cf-input" placeholder="e.g. 30000">
+        <button class="btn-remove" style="visibility:hidden">✕</button>
+      </div>
+    `;
+    yearCount = 1;
+    document.getElementById('result-card').style.display = 'none';
+    document.getElementById('share-card').style.display = 'none';
+  });
+
+  // --- Steps toggle ---
+  let stepsVisible = false;
+  document.getElementById('btn-steps').addEventListener('click', () => {
+    stepsVisible = !stepsVisible;
+    document.getElementById('steps-block').style.display = stepsVisible ? 'block' : 'none';
+    document.getElementById('btn-steps').textContent = stepsVisible ? 'Hide Steps' : 'Show Steps';
+  });
+
+  // --- Calculate ---
+  document.getElementById('btn-calc').addEventListener('click', calculate);
+
+  function fmt(n, dec=2) { return Number(n).toFixed(dec); }
+  function fmtMoney(n) { return '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+  function calculate() {
+    const initial = parseFloat(document.getElementById('initial').value);
+    const discount = isDiscounted ? parseFloat(document.getElementById('discount').value) : 0;
+    const required = parseFloat(document.getElementById('required').value) || null;
+
+    if (isNaN(initial) || initial <= 0) {
+      alert('Please enter a positive Initial Investment.');
+      return;
+    }
+    if (isDiscounted && (isNaN(discount) || discount < 0)) {
+      alert('Please enter a valid Discount Rate (0 or positive).');
+      return;
+    }
+
+    // Collect cash flows
+    const cashFlows = [];
+    const inputs = cfContainer.querySelectorAll('.cf-input');
+    inputs.forEach(input => {
+      const val = parseFloat(input.value);
+      if (isNaN(val)) {
+        cashFlows.push(0);
+      } else {
+        cashFlows.push(val);
+      }
+    });
+
+    if (cashFlows.length === 0 || cashFlows.every(cf => cf === 0)) {
+      alert('Please enter at least one non-zero cash flow.');
+      return;
+    }
+
+    // Calculate cumulative cash flows
+    const r = discount / 100;
+    let cumulative = 0;
+    let paybackYear = null;
+    let paybackExact = null;
+    const table = [];
+
+    for (let i = 0; i < cashFlows.length; i++) {
+      const year = i + 1;
+      const cf = cashFlows[i];
+      const pv = isDiscounted ? cf / Math.pow(1 + r, year) : cf;
+      cumulative += pv;
+      const unrecovered = initial - cumulative;
+
+      table.push({
+        year,
+        cf,
+        pv: isDiscounted ? pv : null,
+        cumulative,
+        unrecovered: unrecovered > 0 ? unrecovered : 0
+      });
+
+      if (paybackYear === null && cumulative >= initial) {
+        paybackYear = year;
+        // Calculate exact payback with fraction
+        const prevCumulative = i > 0 ? table[i-1].cumulative : 0;
+        const fraction = (initial - prevCumulative) / pv;
+        paybackExact = (year - 1) + fraction;
+      }
+    }
+
+    const totalCF = cashFlows.reduce((sum, cf) => sum + cf, 0);
+    const paybackAchieved = cumulative >= initial;
+
+    // Render results
+    const grid = document.getElementById('results-grid');
+    const rows = [];
+
+    if (paybackAchieved) {
+      rows.push({
+        label: isDiscounted ? 'Discounted Payback Period' : 'Simple Payback Period',
+        value: fmt(paybackExact, 2) + ' years',
+        note: `Recovered in Year ${paybackYear}`,
+        highlight: true
+      });
+    } else {
+      rows.push({
+        label: isDiscounted ? 'Discounted Payback Period' : 'Simple Payback Period',
+        value: 'Not Achieved',
+        note: `Only $${fmt(cumulative, 0)} of $${fmt(initial, 0)} recovered`,
+        highlight: true
+      });
+    }
+
+    rows.push({
+      label: 'Total Cash Inflows',
+      value: fmtMoney(totalCF),
+      note: isDiscounted ? '(undiscounted)' : ''
+    });
+
+    rows.push({
+      label: isDiscounted ? 'Total PV of Cash Flows' : 'Total Cumulative Cash Flows',
+      value: fmtMoney(cumulative),
+      note: isDiscounted ? `at ${fmt(discount, 1)}% discount` : ''
+    });
+
+    if (required !== null && paybackAchieved) {
+      const accept = paybackExact <= required;
+      rows.push({
+        label: 'Decision',
+        value: accept ? 'ACCEPT' : 'REJECT',
+        note: `Required: ${fmt(required, 1)} years`,
+        highlight: true
+      });
+    }
+
+    grid.innerHTML = rows.map(r => `
+      <div class="result-item${r.highlight ? ' result-highlight' : ''}">
+        <div class="result-label">${r.label}${r.note ? '<span class="result-note">' + r.note + '</span>' : ''}</div>
+        <div class="result-value">${r.value}</div>
+      </div>
+    `).join('');
+
+    // Render table
+    const tableContainer = document.getElementById('table-container');
+    let tableHTML = '<table class="cf-table"><thead><tr>';
+    tableHTML += '<th>Year</th><th>Cash Flow</th>';
+    if (isDiscounted) tableHTML += '<th>PV @ ' + fmt(discount, 1) + '%</th>';
+    tableHTML += '<th>Cumulative</th><th>Unrecovered</th>';
+    tableHTML += '</tr></thead><tbody>';
+
+    table.forEach(row => {
+      const highlightClass = row.year === paybackYear ? ' class="payback-row"' : '';
+      tableHTML += `<tr${highlightClass}>`;
+      tableHTML += `<td>${row.year}</td>`;
+      tableHTML += `<td>${fmtMoney(row.cf)}</td>`;
+      if (isDiscounted) tableHTML += `<td>${fmtMoney(row.pv)}</td>`;
+      tableHTML += `<td>${fmtMoney(row.cumulative)}</td>`;
+      tableHTML += `<td>${fmtMoney(row.unrecovered)}</td>`;
+      tableHTML += '</tr>';
+    });
+
+    tableHTML += '</tbody></table>';
+    tableContainer.innerHTML = tableHTML;
+
+    // Steps
+    const stepsBlock = document.getElementById('steps-block');
+    let stepsHTML = '<ol class="steps-list">';
+    stepsHTML += `<li><strong>Initial Investment (I₀)</strong> = ${fmtMoney(initial)}</li>`;
+    if (isDiscounted) {
+      stepsHTML += `<li><strong>Discount Rate</strong> = ${fmt(discount, 1)}%</li>`;
+    }
+    stepsHTML += '<li><strong>Calculate cumulative cash flows</strong>:<ul>';
+
+    table.forEach((row, idx) => {
+      if (isDiscounted) {
+        stepsHTML += `<li>Year ${row.year}: PV = ${fmtMoney(row.cf)} / (1.${fmt(r * 100, 0).padStart(2, '0')})^${row.year} = ${fmtMoney(row.pv)} → Cumulative = ${fmtMoney(row.cumulative)}</li>`;
+      } else {
+        stepsHTML += `<li>Year ${row.year}: ${fmtMoney(row.cf)} → Cumulative = ${fmtMoney(row.cumulative)}</li>`;
+      }
+    });
+    stepsHTML += '</ul></li>';
+
+    if (paybackAchieved) {
+      const prevCumulative = paybackYear > 1 ? table[paybackYear - 2].cumulative : 0;
+      const currentPV = isDiscounted ? table[paybackYear - 1].pv : table[paybackYear - 1].cf;
+      const fraction = (initial - prevCumulative) / currentPV;
+      stepsHTML += `<li><strong>Payback occurs in Year ${paybackYear}</strong><br>`;
+      stepsHTML += `Exact payback = ${paybackYear - 1} + (${fmtMoney(initial - prevCumulative)} / ${fmtMoney(currentPV)}) = ${paybackYear - 1} + ${fmt(fraction, 4)} = <strong>${fmt(paybackExact, 2)} years</strong></li>`;
+    } else {
+      stepsHTML += `<li><strong>Payback not achieved</strong>: Cumulative cash flows (${fmtMoney(cumulative)}) never reach I₀ (${fmtMoney(initial)})</li>`;
+    }
+
+    stepsHTML += '</ol>';
+    stepsBlock.innerHTML = stepsHTML;
+
+    document.getElementById('result-card').style.display = 'block';
+
+    // Share link
+    const params = new URLSearchParams({ initial, mode: isDiscounted ? 'discounted' : 'simple' });
+    if (isDiscounted) params.set('r', discount);
+    if (required) params.set('required', required);
+    cashFlows.forEach((cf, idx) => params.set(`cf${idx + 1}`, cf));
+    document.getElementById('share-url').value = location.origin + location.pathname + '?' + params.toString();
+    document.getElementById('share-card').style.display = 'block';
+    if (!stepsVisible) { document.getElementById('steps-block').style.display = 'none'; }
+  }
+
+  // Copy link
+  document.getElementById('btn-copy').addEventListener('click', () => {
+    navigator.clipboard.writeText(document.getElementById('share-url').value);
+    document.getElementById('btn-copy').textContent = 'Copied!';
+    setTimeout(() => document.getElementById('btn-copy').textContent = 'Copy Link', 2000);
+  });
+
+  // Load from URL params
+  const sp = new URLSearchParams(location.search);
+  if (sp.get('initial')) {
+    document.getElementById('initial').value = sp.get('initial');
+
+    if (sp.get('mode') === 'discounted') {
+      isDiscounted = true;
+      modeToggle.querySelectorAll('button').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === 'discounted');
+      });
+      discountField.style.display = 'block';
+      if (sp.get('r')) document.getElementById('discount').value = sp.get('r');
+    }
+
+    if (sp.get('required')) document.getElementById('required').value = sp.get('required');
+
+    // Load cash flows
+    cfContainer.innerHTML = '';
+    yearCount = 0;
+    let year = 1;
+    while (sp.get(`cf${year}`)) {
+      yearCount++;
+      const row = document.createElement('div');
+      row.className = 'cf-row';
+      row.dataset.year = yearCount;
+      row.innerHTML = `
+        <label>Year ${yearCount}:</label>
+        <input type="number" step="any" class="cf-input" value="${sp.get(`cf${year}`)}">
+        <button class="btn-remove">✕</button>
+      `;
+      cfContainer.appendChild(row);
+      row.querySelector('.btn-remove').addEventListener('click', () => {
+        row.remove();
+        renumberYears();
+      });
+      year++;
+    }
+    renumberYears();
+
+    if (sp.get('initial')) calculate();
+  }
+})();
+</script>
+
+<style>
+.cf-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 40px;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.cf-row label {
+  font-weight: 500;
+  margin: 0;
+}
+.cf-input {
+  width: 100%;
+}
+.btn-remove {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
+}
+.btn-remove:hover {
+  background: #c82333;
+}
+.cf-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+.cf-table th,
+.cf-table td {
+  padding: 0.5rem;
+  text-align: right;
+  border-bottom: 1px solid #e0e0e0;
+}
+.cf-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+  text-align: center;
+}
+.cf-table td:first-child,
+.cf-table th:first-child {
+  text-align: center;
+}
+.payback-row {
+  background-color: #e8f5e9;
+  font-weight: 600;
+}
+</style>
+
+</body>
+</html>
