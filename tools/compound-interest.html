@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Compound Interest Calculator - BAFN 302 Toolkit</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/calculator.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo"><span class="logo-icon">$</span><span class="logo-text"><em>BAFN 302</em> Toolkit</span></div>
+  </header>
+
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">&larr; Dashboard</a>
+      <h1>Compound Interest Calculator</h1>
+      <button class="btn-sm" id="btn-example">Load Example</button>
+      <button class="btn-sm" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="tool-insight">
+      <div class="insight-why">
+        <span class="insight-icon">💡</span>
+        <div>
+          <strong>Why This Matters</strong>
+          <p>Compound interest is the foundation of wealth building. When you invest money, not only do you earn interest on your principal, but you also earn interest on that interest. This compounding effect accelerates growth dramatically over time, especially with frequent compounding periods and longer time horizons.</p>
+        </div>
+      </div>
+      <div class="insight-vars">
+        <div class="insight-var-title">What each input means:</div>
+        <ul>
+          <li><strong>Principal (P)</strong> — The initial amount of money you invest or borrow</li>
+          <li><strong>Interest Rate (r)</strong> — The annual interest rate expressed as a percentage</li>
+          <li><strong>Time (t)</strong> — The number of years the money is invested or borrowed</li>
+          <li><strong>Compounding Frequency (n)</strong> — How often interest is calculated and added (Annual=1, Semi=2, Quarterly=4, Monthly=12, Daily=365)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" id="input-card">
+      <div class="card-title">Calculate Compound Interest</div>
+
+      <div class="input-grid">
+        <div class="field">
+          <label>Principal (P) <span class="tip" data-tip="Initial investment amount">?</span></label>
+          <input type="number" step="any" id="principal" placeholder="e.g. 5000">
+        </div>
+        <div class="field">
+          <label>Interest Rate (%) <span class="tip" data-tip="Annual percentage rate">?</span></label>
+          <input type="number" step="any" id="rate" placeholder="e.g. 7">
+        </div>
+        <div class="field">
+          <label>Time (Years) <span class="tip" data-tip="Investment period">?</span></label>
+          <input type="number" step="any" id="time" placeholder="e.g. 20">
+        </div>
+        <div class="field">
+          <label>Compounding Frequency</label>
+          <select id="frequency">
+            <option value="1">Annual</option>
+            <option value="2">Semiannual</option>
+            <option value="4">Quarterly</option>
+            <option value="12" selected>Monthly</option>
+            <option value="365">Daily</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btn-calculate">Calculate</button>
+      </div>
+    </div>
+
+    <div class="warnings" id="warnings"></div>
+
+    <div class="card result-card hidden" id="result-card">
+      <div class="card-title">Results</div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <div style="margin-bottom: 1rem;">
+          <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.25rem;">Future Value</div>
+          <div class="result-primary" id="result-fv"></div>
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.25rem;">Interest Earned</div>
+          <div class="result-primary" id="result-interest" style="color: #10b981;"></div>
+        </div>
+      </div>
+
+      <div class="result-details" id="result-details"></div>
+
+      <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+        <div style="margin-bottom: 1rem;">
+          <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem;">Formula</div>
+          <div class="formula" id="formula-display">A = P(1 + r/n)^(nt)</div>
+        </div>
+      </div>
+
+      <button class="btn btn-outline" style="margin-top:.75rem" id="btn-copy">Copy results</button>
+      <button class="btn btn-outline" id="btn-share">Copy share link</button>
+      <button class="steps-toggle">Show calculation steps</button>
+      <div class="steps-body" id="steps-body"></div>
+    </div>
+
+    <div class="card hidden" id="chart-card">
+      <div class="card-title">Growth Over Time</div>
+      <div style="position: relative; height: 400px; margin: 1rem 0;">
+        <canvas id="growth-chart"></canvas>
+      </div>
+      <p style="font-size: 0.85rem; color: #666; margin-top: 1rem; text-align: center;">
+        Shows how your investment grows year by year with compound interest
+      </p>
+    </div>
+  </main>
+
+  <footer class="site-footer"><p>For educational use only.</p></footer>
+
+  <script src="/js/finance.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    let chartInstance = null;
+
+    function calculate() {
+      const warn = document.getElementById('warnings');
+      UI.clearWarnings(warn);
+
+      const principal = UI.getNum('principal');
+      const rate = UI.getNum('rate');
+      const time = UI.getNum('time');
+      const frequency = parseInt(UI.getSel('frequency'));
+
+      if (isNaN(principal) || principal <= 0) {
+        UI.addWarning(warn, 'Please enter a positive principal amount.', 'error');
+        return;
+      }
+      if (isNaN(rate) || rate < 0) {
+        UI.addWarning(warn, 'Please enter a non-negative interest rate.', 'error');
+        return;
+      }
+      if (isNaN(time) || time <= 0) {
+        UI.addWarning(warn, 'Please enter a positive time period.', 'error');
+        return;
+      }
+
+      // Calculate compound interest: A = P(1 + r/n)^(nt)
+      const r = rate / 100 / frequency;  // periodic rate
+      const n = time * frequency;         // total periods
+      const futureValue = principal * Math.pow(1 + r, n);
+      const interestEarned = futureValue - principal;
+
+      // Display results
+      document.getElementById('result-fv').textContent = Finance.fmtMoney(futureValue);
+      document.getElementById('result-interest').textContent = Finance.fmtMoney(interestEarned);
+
+      // Display details
+      const details = document.getElementById('result-details');
+      while (details.firstChild) details.removeChild(details.firstChild);
+
+      addDetail(details, 'Principal (P)', Finance.fmtMoney(principal));
+      addDetail(details, 'Interest Rate (r)', Finance.fmtPct(rate / 100));
+      addDetail(details, 'Time (t)', time + ' years');
+      addDetail(details, 'Compounding Frequency (n)', frequency + 'x per year');
+      addDetail(details, 'Periodic Rate', Finance.fmtPct(r));
+      addDetail(details, 'Total Periods', n.toString());
+
+      // Calculate effective annual rate (EAR)
+      const ear = Math.pow(1 + r, frequency) - 1;
+      addDetail(details, 'Effective Annual Rate (EAR)', Finance.fmtPct(ear));
+
+      // Show calculation steps
+      const steps = document.getElementById('steps-body');
+      while (steps.firstChild) steps.removeChild(steps.firstChild);
+
+      const stepsHtml = `
+        <div style="font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.6;">
+          <div style="margin-bottom: 0.75rem;"><strong>Formula:</strong> A = P(1 + r/n)^(nt)</div>
+          <div style="margin-bottom: 0.75rem;"><strong>Substitute values:</strong><br>
+            A = ${Finance.fmtMoney(principal)}(1 + ${Finance.fmtPct(rate/100)}/${frequency})^(${frequency}×${time})<br>
+            A = ${Finance.fmtMoney(principal)}(1 + ${Finance.fmtPct(r)})^${n}
+          </div>
+          <div style="margin-bottom: 0.75rem;"><strong>Calculate:</strong><br>
+            A = ${Finance.fmtMoney(principal)} × ${(Math.pow(1 + r, n)).toFixed(6)}<br>
+            A = ${Finance.fmtMoney(futureValue)}
+          </div>
+          <div><strong>Interest Earned:</strong><br>
+            I = A - P<br>
+            I = ${Finance.fmtMoney(futureValue)} - ${Finance.fmtMoney(principal)}<br>
+            I = ${Finance.fmtMoney(interestEarned)}
+          </div>
+        </div>
+      `;
+      steps.innerHTML = stepsHtml;
+
+      // Show results
+      UI.showResult(document.getElementById('result-card'));
+
+      // Generate growth chart
+      generateGrowthChart(principal, rate, time, frequency);
+
+      // Copy and share handlers
+      document.getElementById('btn-copy').onclick = () => {
+        UI.copyText(
+          'Future Value: ' + Finance.fmtMoney(futureValue) + '\n' +
+          'Interest Earned: ' + Finance.fmtMoney(interestEarned)
+        );
+      };
+
+      document.getElementById('btn-share').onclick = () => {
+        const params = {
+          principal,
+          rate,
+          time,
+          frequency
+        };
+        UI.copyText(UI.buildShareLink(params));
+      };
+    }
+
+    function addDetail(container, label, value) {
+      const div = document.createElement('div');
+      div.className = 'result-detail';
+      const lbl = document.createElement('div');
+      lbl.className = 'detail-label';
+      lbl.textContent = label;
+      const val = document.createElement('div');
+      val.className = 'detail-value';
+      val.textContent = value;
+      div.appendChild(lbl);
+      div.appendChild(val);
+      container.appendChild(div);
+    }
+
+    function generateGrowthChart(principal, rate, time, frequency) {
+      const chartCard = document.getElementById('chart-card');
+      chartCard.classList.remove('hidden');
+
+      // Generate year-by-year data
+      const labels = [];
+      const values = [];
+      const principalLine = [];
+
+      const yearStep = Math.max(1, Math.floor(time / 20)); // Max 20 points
+      for (let year = 0; year <= time; year += yearStep || 1) {
+        labels.push(year.toFixed(0) + 'y');
+        const r = rate / 100 / frequency;
+        const n = year * frequency;
+        const fv = principal * Math.pow(1 + r, n);
+        values.push(fv);
+        principalLine.push(principal);
+      }
+
+      const ctx = document.getElementById('growth-chart').getContext('2d');
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Future Value',
+              data: values,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderWidth: 3,
+              fill: true,
+              tension: 0.3,
+              pointRadius: 5,
+              pointBackgroundColor: '#10b981',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2
+            },
+            {
+              label: 'Principal (No Interest)',
+              data: principalLine,
+              borderColor: '#9ca3af',
+              borderWidth: 2,
+              fill: false,
+              tension: 0,
+              borderDash: [5, 5],
+              pointRadius: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                padding: 15,
+                font: { size: 12 }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Value ($)'
+              },
+              ticks: {
+                callback: function(value) {
+                  return '$' + value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                }
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Time'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    document.getElementById('btn-calculate').addEventListener('click', calculate);
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      UI.resetForm(['principal', 'rate', 'time']);
+      document.getElementById('frequency').value = '12';
+      document.getElementById('chart-card').classList.add('hidden');
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+      }
+    });
+
+    document.getElementById('btn-example').addEventListener('click', () => {
+      UI.setVal('principal', '5000');
+      UI.setVal('rate', '7');
+      UI.setVal('time', '20');
+      document.getElementById('frequency').value = '12';
+    });
+
+    // Initialize steps toggle
+    UI.initStepsToggle();
+
+    // Load from URL params on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      UI.loadParams(['principal', 'rate', 'time']);
+      const params = UI.getParams();
+      if (params.frequency) document.getElementById('frequency').value = params.frequency;
+    });
+  </script>
+</body>
+</html>

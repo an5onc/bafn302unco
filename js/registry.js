@@ -15,6 +15,13 @@ const TOOL_REGISTRY = [
     path: '/tools/lumpsum.html'
   },
   {
+    id: 'compound-interest',
+    title: 'Compound Interest Calculator',
+    description: 'Calculate future value with daily, monthly, quarterly, or annual compounding. Visualize growth over time.',
+    category: 'Time Value of Money',
+    path: '/tools/compound-interest.html'
+  },
+  {
     id: 'annuity',
     title: 'Annuity PV / FV',
     description: 'Present or future value of equal periodic payments (ordinary or due).',
