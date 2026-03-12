@@ -22,6 +22,13 @@ const TOOL_REGISTRY = [
     path: '/tools/compound-interest.html'
   },
   {
+    id: 'retirement',
+    title: 'Retirement Planning Calculator',
+    description: 'Plan for retirement with projections, milestones, and scenario analysis. Calculate savings needed and monthly contributions.',
+    category: 'Financial Planning',
+    path: '/tools/retirement.html'
+  },
+  {
     id: 'annuity',
     title: 'Annuity PV / FV',
     description: 'Present or future value of equal periodic payments (ordinary or due).',
