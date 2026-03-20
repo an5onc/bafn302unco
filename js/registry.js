@@ -1,6 +1,13 @@
 // ===== Tool Registry =====
 const TOOL_REGISTRY = [
   {
+    id: 'progress',
+    title: 'Course Progress Dashboard',
+    description: 'Track your BAFN 302 progress with assignments, deadlines, grades, and course completion tracking.',
+    category: 'Course Management',
+    path: '/tools/progress.html'
+  },
+  {
     id: 'tvm',
     title: 'TVM Solver',
     description: 'Solve for PV, FV, PMT, interest rate, or number of periods. Leave one blank to solve.',

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Course Progress Dashboard — BAFN 302</title>
+  <meta name="description" content="Track your BAFN 302 Business Finance course progress, assignments, and grades.">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/progress.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo">
+      <span class="logo-icon">$</span>
+      <span class="logo-text"><em>BAFN 302</em> Toolkit</span>
+      <span class="course-badge">BAFN 302</span>
+    </div>
+    <div class="search-box">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="search" placeholder="Search tools…" autocomplete="off">
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">← Dashboard</a>
+      <h1>Course Progress Dashboard</h1>
+    </div>
+
+    <!-- Overall Progress Card -->
+    <div class="card progress-overview-card">
+      <div class="progress-header">
+        <div class="progress-stats">
+          <div class="stat-item">
+            <div class="stat-label">Course Completion</div>
+            <div class="stat-value" id="completion-percentage">0%</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Current Grade</div>
+            <div class="stat-value grade-display" id="current-grade">--</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Assignments Completed</div>
+            <div class="stat-value" id="assignments-completed">0/0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Next Deadline</div>
+            <div class="stat-value deadline-display" id="next-deadline">--</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress-bar-container">
+        <div class="progress-bar-label">
+          <span>Overall Course Progress</span>
+          <span id="progress-text">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="dashboard-grid">
+
+      <!-- Left Column: Assignments & Exams -->
+      <div class="dashboard-column">
+
+        <!-- Upcoming Deadlines -->
+        <div class="card">
+          <div class="card-title">Upcoming Deadlines</div>
+          <div id="upcoming-deadlines" class="deadline-list"></div>
+        </div>
+
+        <!-- Completed Assignments -->
+        <div class="card">
+          <div class="card-title">Completed Assignments</div>
+          <div id="completed-assignments" class="assignment-list"></div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Grades & Topics -->
+      <div class="dashboard-column">
+
+        <!-- Grade Breakdown -->
+        <div class="card">
+          <div class="card-title">Grade Breakdown</div>
+          <div id="grade-breakdown" class="grade-breakdown"></div>
+        </div>
+
+        <!-- Course Topics Progress -->
+        <div class="card">
+          <div class="card-title">Course Topics</div>
+          <div id="topics-progress" class="topics-list"></div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>For educational use only · Not financial advice · Built for BAFN 302 @ UNC</p>
+    <p class="footer-brand">Powered & maintained by <a href="https://n3xg3nstudio.com" target="_blank" rel="noopener">n3xg3nstudio.com</a></p>
+  </footer>
+
+  <script src="/js/progress.js"></script>
+</body>
+</html>

@@ -1,0 +1,504 @@
+/* ===== Course Progress Dashboard Styles ===== */
+
+/* Progress Overview Card */
+.progress-overview-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent);
+  margin-bottom: 1.5rem;
+}
+
+.progress-header {
+  margin-bottom: 1.5rem;
+}
+
+.progress-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: -0.02em;
+}
+
+.stat-value.grade-display {
+  color: var(--accent);
+}
+
+.stat-value.deadline-display {
+  color: var(--cat-cf);
+}
+
+/* Progress Bar */
+.progress-bar-container {
+  margin-top: 1.5rem;
+}
+
+.progress-bar-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 32px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #6366f1);
+  transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--radius);
+  position: relative;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 1000px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Deadline List */
+.deadline-list,
+.assignment-list,
+.topics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  padding: 2rem 1rem;
+}
+
+/* Deadline Item */
+.deadline-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.2s;
+}
+
+.deadline-item:hover {
+  background: var(--surface);
+  border-color: var(--accent);
+  transform: translateX(4px);
+}
+
+.deadline-item.urgent {
+  background: var(--warning-light);
+  border-color: var(--warning);
+  border-left: 4px solid var(--warning);
+}
+
+.deadline-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  background: var(--accent-light);
+  border: 1px solid var(--accent-mid);
+  flex-shrink: 0;
+}
+
+.deadline-icon.exam {
+  background: #fef3c7;
+  border-color: #fde68a;
+}
+
+.deadline-icon.project {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.deadline-content {
+  flex: 1;
+}
+
+.deadline-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 0.25rem;
+}
+
+.deadline-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.deadline-separator {
+  color: var(--border-strong);
+}
+
+.deadline-date {
+  text-align: right;
+}
+
+.deadline-day {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.deadline-date.urgent .deadline-day {
+  color: var(--warning);
+}
+
+.deadline-full-date {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+/* Assignment Item */
+.assignment-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.2s;
+}
+
+.assignment-item:hover {
+  background: var(--surface);
+  border-color: var(--success);
+  transform: translateX(4px);
+}
+
+.assignment-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  background: var(--success-light);
+  border: 1px solid var(--success);
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.assignment-content {
+  flex: 1;
+}
+
+.assignment-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 0.25rem;
+}
+
+.assignment-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.assignment-separator {
+  color: var(--border-strong);
+}
+
+.assignment-grade {
+  text-align: right;
+}
+
+.grade-percent {
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: var(--mono);
+}
+
+.assignment-grade.excellent .grade-percent {
+  color: var(--success);
+}
+
+.assignment-grade.good .grade-percent {
+  color: var(--accent);
+}
+
+.assignment-grade.average .grade-percent {
+  color: var(--warning);
+}
+
+.assignment-grade.poor .grade-percent {
+  color: var(--danger);
+}
+
+.grade-points {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+/* Grade Breakdown */
+.grade-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.grade-category {
+  padding: 0.875rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.2s;
+}
+
+.grade-category:hover {
+  background: var(--surface);
+  border-color: var(--accent);
+}
+
+.grade-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.grade-category-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.grade-category-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  background: var(--accent-light);
+  border: 1px solid var(--accent-mid);
+  flex-shrink: 0;
+}
+
+.grade-category-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 0.2rem;
+}
+
+.grade-category-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.grade-category-score {
+  text-align: right;
+}
+
+.grade-category-percent {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-family: var(--mono);
+  color: var(--accent);
+}
+
+.grade-category-percent.pending {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.grade-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.grade-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #6366f1);
+  border-radius: 999px;
+  transition: width 0.8s ease-out;
+}
+
+/* Topics List */
+.topic-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.2s;
+}
+
+.topic-item:hover {
+  background: var(--surface);
+}
+
+.topic-item.completed {
+  opacity: 0.7;
+}
+
+.topic-item.completed:hover {
+  opacity: 1;
+}
+
+.topic-status {
+  flex-shrink: 0;
+}
+
+.topic-checkbox {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-strong);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: #fff;
+  transition: all 0.2s;
+}
+
+.topic-checkbox.checked {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.topic-content {
+  flex: 1;
+}
+
+.topic-chapter {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin-bottom: 0.15rem;
+}
+
+.topic-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--navy);
+}
+
+.topic-item.completed .topic-chapter {
+  color: var(--text-muted);
+}
+
+.topic-item.completed .topic-title {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+  .progress-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .stat-value {
+    font-size: 1.35rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .deadline-item,
+  .assignment-item {
+    padding: 0.75rem;
+  }
+
+  .deadline-icon,
+  .assignment-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.125rem;
+  }
+}

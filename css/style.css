@@ -14,6 +14,7 @@
   --accent-mid:#bfdbfe;
 
   /* Category colors */
+  --cat-course:#ec4899;
   --cat-tvm:#3b82f6;
   --cat-cf:#10b981;
   --cat-rates:#f59e0b;
@@ -210,6 +211,7 @@ a:hover{text-decoration:underline}
 }
 
 /* Category accent colors on cards */
+.cat-course { --card-accent: var(--cat-course) }
 .cat-tvm   { --card-accent: var(--cat-tvm) }
 .cat-cf    { --card-accent: var(--cat-cf) }
 .cat-rates { --card-accent: var(--cat-rates) }
