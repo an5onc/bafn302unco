@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Course Modules — BAFN 302</title>
+  <meta name="description" content="BAFN 302 Business Finance course modules: Time Value of Money, Financial Analysis, Risk & Return, Capital Budgeting, and more.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .module-header {
+      margin-bottom: 2rem;
+      padding: 2rem;
+      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-green) 100%);
+      border-radius: 8px;
+      color: white;
+    }
+
+    .module-header h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 2rem;
+    }
+
+    .module-header p {
+      margin: 0;
+      font-size: 1rem;
+      opacity: 0.95;
+    }
+
+    .module-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .module-stat {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 1rem;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .module-stat-value {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .module-stat-label {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .module-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .module-card:hover {
+      border-color: var(--accent-blue);
+      box-shadow: 0 4px 12px rgba(66, 144, 251, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .module-badge {
+      display: inline-block;
+      width: fit-content;
+      padding: 0.4rem 0.8rem;
+      background: var(--accent-blue);
+      color: white;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+
+    .module-badge.advanced {
+      background: var(--accent-orange);
+    }
+
+    .module-badge.capstone {
+      background: #e74c3c;
+    }
+
+    .module-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .module-card h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.3rem;
+      color: var(--text-primary);
+    }
+
+    .module-description {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+      flex: 1;
+    }
+
+    .module-topics {
+      margin: 1rem 0;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .module-topics-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .topics-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .topic-tag {
+      display: inline-block;
+      padding: 0.3rem 0.6rem;
+      background: var(--surface-light);
+      color: var(--text-secondary);
+      border-radius: 3px;
+      font-size: 0.8rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .module-progress {
+      margin: 1rem 0;
+      padding: 1rem 0;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--surface-light);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .module-resources {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .resources-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .resource-links {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .resource-link {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem;
+      background: var(--surface-light);
+      border-radius: 4px;
+      color: var(--accent-blue);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .resource-link:hover {
+      background: var(--accent-blue);
+      color: white;
+      border-color: var(--accent-blue);
+    }
+
+    .resource-icon {
+      margin-right: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .learning-objectives {
+      margin: 2rem 0;
+      padding: 1.5rem;
+      background: var(--surface-light);
+      border-left: 4px solid var(--accent-blue);
+      border-radius: 4px;
+    }
+
+    .learning-objectives h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.1rem;
+    }
+
+    .objectives-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .objectives-list li {
+      padding: 0.5rem 0;
+      padding-left: 1.5rem;
+      position: relative;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .objectives-list li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--accent-green);
+      font-weight: bold;
+    }
+
+    .module-sequence {
+      display: flex;
+      gap: 1rem;
+      margin: 2rem 0;
+      position: relative;
+    }
+
+    .sequence-item {
+      flex: 1;
+      padding: 1rem;
+      background: var(--surface-light);
+      border-radius: 6px;
+      text-align: center;
+      border-left: 4px solid var(--border-color);
+    }
+
+    .sequence-item.active {
+      border-left-color: var(--accent-blue);
+      background: rgba(66, 144, 251, 0.05);
+    }
+
+    .sequence-number {
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: var(--accent-blue);
+      margin-bottom: 0.25rem;
+    }
+
+    .sequence-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .filter-buttons {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 0.6rem 1.2rem;
+      background: var(--surface-light);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      color: var(--text-secondary);
+    }
+
+    .filter-btn:hover {
+      border-color: var(--accent-blue);
+    }
+
+    .filter-btn.active {
+      background: var(--accent-blue);
+      color: white;
+      border-color: var(--accent-blue);
+    }
+
+    @media (max-width: 768px) {
+      .modules-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .module-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .module-sequence {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo">
+      <span class="logo-icon">$</span>
+      <span class="logo-text"><em>BAFN 302</em> Toolkit</span>
+      <span class="course-badge">BAFN 302</span>
+    </div>
+    <div class="search-box">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="search" placeholder="Search modules…" autocomplete="off">
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="tool-topbar">
+      <a href="/" class="back-link">← Dashboard</a>
+      <h1>Course Modules</h1>
+    </div>
+
+    <!-- Module Header with Stats -->
+    <div class="module-header">
+      <h1>BAFN 302: Business Finance</h1>
+      <p>Master corporate finance concepts from time value of money through capital structure and project valuation</p>
+      <div class="module-stats">
+        <div class="module-stat">
+          <div class="module-stat-value" id="total-modules">8</div>
+          <div class="module-stat-label">Modules</div>
+        </div>
+        <div class="module-stat">
+          <div class="module-stat-value" id="total-topics">24+</div>
+          <div class="module-stat-label">Topics Covered</div>
+        </div>
+        <div class="module-stat">
+          <div class="module-stat-value" id="avg-completion">--</div>
+          <div class="module-stat-label">Your Progress</div>
+        </div>
+        <div class="module-stat">
+          <div class="module-stat-value" id="total-resources">40+</div>
+          <div class="module-stat-label">Resources</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="filter-buttons">
+      <button class="filter-btn active" data-filter="all">All Modules</button>
+      <button class="filter-btn" data-filter="foundational">Foundational</button>
+      <button class="filter-btn" data-filter="intermediate">Intermediate</button>
+      <button class="filter-btn" data-filter="advanced">Advanced</button>
+    </div>
+
+    <!-- Modules Grid -->
+    <div class="modules-grid" id="modules-container">
+      <!-- Module 1: Time Value of Money -->
+      <div class="module-card" data-level="foundational">
+        <span class="module-badge">Module 1</span>
+        <div class="module-icon">📐</div>
+        <h3>Time Value of Money</h3>
+        <p class="module-description">
+          Master the fundamental principle that money today is worth more than money tomorrow. Learn present value, future value, and how compounding creates wealth over time.
+        </p>
+
+        <div class="module-topics">
+          <div class="module-topics-label">Topics</div>
+          <div class="topics-list">
+            <span class="topic-tag">Present Value</span>
+            <span class="topic-tag">Future Value</span>
+            <span class="topic-tag">Compounding</span>
+            <span class="topic-tag">Discounting</span>
+            <span class="topic-tag">Annuities</span>
+          </div>
+        </div>
+
+        <div class="module-progress">
+          <div class="progress-label">
+            <span>Module Progress</span>
+            <span class="completion-pct">45%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 45%"></div>
+          </div>
+        </div>
+
+        <div class="module-resources">
+          <div class="resources-label">Key Tools</div>
+          <div class="resource-links">
+            <a href="/tools/lumpsum.html" class="resource-link">
+              <span class="resource-icon">🔧</span> Lump Sum PV/FV Calculator
+            </a>
+            <a href="/tools/annuity.html" class="resource-link">
+              <span class="resource-icon">🔧</span> Annuity Calculator
+            </a>
+            <a href="/tools/compound-interest.html" class="resource-link">
+              <span class="resource-icon">🔧</span> Compound Interest Visualizer
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 2: Financial Statement Analysis -->
+      <div class="module-card" data-level="foundational">
+        <span class="module-badge">Module 2</span>
+        <div class="module-icon">📊</div>
+        <h3>Financial Statement Analysis</h3>
+        <p class="module-description">
+          Learn to read, interpret, and analyze financial statements. Understand balance sheets, income statements, cash flow statements, and financial ratios that drive business decisions.
+        </p>
+
+        <div class="module-topics">
+          <div class="module-topics-label">Topics</div>
+          <div class="topics-list">
+            <span class="topic-tag">Balance Sheet</span>
+            <span class="topic-tag">Income Statement</span>
+            <span class="topic-tag">Cash Flow</span>
+            <span class="topic-tag">Financial Ratios</span>
+            <span class="topic-tag">DuPont Analysis</span>
+          </div>
+        </div>
+
+        <div class="module-progress">
+          <div class="progress-label">
+            <span>Module Progress</span>
+            <span class="completion-pct">30%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 30%"></div>
+          </div>
+        </div>
+
+        <div class="module-resources">
+          <div class="resources-label">Key Resources</div>
+          <div class="resource-links">
+            <a href="#" class="resource-link">
+              <span class="resource-icon">📖</span> Financial Statement Templates
+            </a>
+            <a href="#" class="resource-link">
+              <span class="resource-icon">📊</span> Ratio Analysis Workbook
+            </a>
+            <a href="#" class="resource-link">
+              <span class="resource-icon">📺</span> Statement Analysis Videos
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 3: Risk and Return -->
+      <div class="module-card" data-level="intermediate">
+        <span class="module-badge advanced">Module 3</span>
+        <div class="module-icon">📈</div>
+        <h3>Risk and Return</h3>
+        <p class="module-description">
+          Explore the fundamental tradeoff between risk and return. Master expected return, standard deviation, correlation, beta, and the Capital Asset Pricing Model (CAPM).
+        </p>
+
+        <div class="module-topics">
+          <div class="module-topics-label">Topics</div>
+          <div class="topics-list">
+            <span class="topic-tag">Expected Return</span>
+            <span class="topic-tag">Standard Deviation</span>
+            <span class="topic-tag">Correlation</span>
+            <span class="topic-tag">Beta & CAPM</span>
+            <span class="topic-tag">Sharpe Ratio</span>
+          </div>
+        </div>
+
+        <div class="module-progress">
+          <div class="progress-label">
+            <span>Module Progress</span>
+            <span class="completion-pct">60%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 60%"></div>
+          </div>
+        </div>
+
+        <div class="module-resources">
+          <div class="resources-label">Key Tools</div>
+          <div class="resource-links">
+            <a href="/tools/risk/expected-return.html" class="resource-link">
+              <span class="resource-icon">🔧</span> Expected Return Calculator
+            </a>
+            <a href="/tools/risk/capm.html" class="resource-link">
+              <span class="resource-icon">🔧</span> CAPM Required Return
+            </a>
+            <a href="/tools/risk/portfolio-risk.html" class="resource-link">
+              <span class="resource-icon">🔧</span> Portfolio Risk Tool
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 4: Capital Budgeting -->
+      <div class="module-card" data-level="intermediate">
+        <span class="module-badge advanced">Module 4</span>
+        <div class="module-icon">💰</div>
+        <h3>Capital Budgeting & Project Evaluation</h3>
+        <p class="module-description">
+          Master project evaluation techniques: NPV, IRR, payback period, and profitability index. Learn how to compare investments and make capital allocation decisions.
+        </p>
+
+        <div class="module-topics">
+          <div class="module-topics-label">Topics</div>
+          <div class="topics-list">
+            <span class="topic-tag">NPV Decision Rule</span>
+            <span class="topic-tag">IRR Calculation</span>
+            <span class="topic-tag">Payback Period</span>
+            <span class="topic-tag">Profitability Index</span>
+            <span class="topic-tag">Break-Even Analysis</span>
+          </div>
+        </div>
+
+        <div class="module-progress">
+          <div class="progress-label">
+            <span>Module Progress</span>
+            <span class="completion-pct">75%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 75%"></div>
+          </div>
+        </div>
+
+        <div class="module-resources">
+          <div class="resources-label">Key Tools</div>
+          <div class="resource-links">
+            <a href="/tools/npv.html" class="resource-link">
+              <span class="resource-icon">🔧</span> NPV Calculator
+            </a>
+            <a href="/tools/irr.html" class="resource-link">
+              <span class="resource-icon">🔧</span> IRR Calculator
+            </a>
+            <a href="/tools/capital/payback.html" class="resource-link">
+              <span class="resource-icon">🔧</span> Payback Period Tool
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 5: Cost of Capital -->
+      <div class="module-card" data-level="advanced">
+        <span class="module-badge capstone">Module 5</span>
+        <div class="module-icon">🏦</div>
+        <h3>Cost of Capital & Capital Structure</h3>
+        <p class="module-description">
+          Learn to calculate the cost of equity and debt, and understand the firm's weighted average cost of capital (WACC). Explore optimal capital structure and financing decisions.
+        </p>
+
+        <div class="module-topics">
+          <div class="module-topics-label">Topics</div>
+          <div class="topics-list">
+            <span class="topic-tag">Cost of Equity</span>
+            <span class="topic-tag">Cost of Debt</span>
+            <span class="topic-tag">WACC</span>
+            <span class="topic-tag">Capital Structure</span>
+            <span class="topic-tag">Modigliani-Miller</span>
+          </div>
+        </div>
+
+        <div class="module-progress">
+          <div class="progress-label">
+            <span>Module Progress</span>
+            <span class="completion-pct">20%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 20%"></div>
+          </div>
+        </div>
+
+        <div class="module-resources">
+          <div class="resources-label">Key Tools</div>
+          <div class="resource-links">
+            <a href="/tools/wacc.html" class="resource-link">
+              <span class="resource-icon">🔧</span> WACC Calculator
+            </a>
+            <a href="/tools/risk/capm.html" class="resource-link">
+              <span class="resource-icon">🔧</span> Cost of Equity (CAPM)
+            </a>
+            <a href="#" class="resource-link">
+              <span class="resource-icon">📖</span> Capital Structure Theory
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 6: Working Capital Management -->
+      <div class="module-card" data-level="intermediate">
+        <span class="module-badge advanced">Module 6</span>
+        <div class="module-icon">💳</div>
+        <h3>Working Capital Management</h3>
+        <p class="module-description">
+          Master short-term financial management. Learn to manage cash, receivables, inventory, and payables to optimize liquidity and operational efficiency.
+        </p>
+
+        <div class="module-topics">
+          <div class="module-topics-label">Topics</div>
+          <div class="topics-list">
+            <span class="topic-tag">Cash Management</span>
+            <span class="topic-tag">Receivables</span>
+            <span class="topic-tag">Inventory</span>
+            <span class="topic-tag">Payables</span>
+            <span class="topic-tag">Working Capital Cycle</span>
+          </div>
+        </div>
+
+        <div class="module-progress">
+          <div class="progress-label">
+            <span>Module Progress</span>
+            <span class="completion-pct">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="module-resources">
+          <div class="resources-label">Key Resources</div>
+          <div class="resource-links">
+            <a href="#" class="resource-link">
+              <span class="resource-icon">📖</span> Working Capital Models
+            </a>
+            <a href="#" class="resource-link">
+              <span class="resource-icon">📊</span> Cash Conversion Cycle
+            </a>
+            <a href="#" class="resource-link">
+              <span class="resource-icon">📚</span> Case Studies
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 7: Valuation and Long-Term Decisions -->
+      <div class="module-card" data-level="advanced">
+        <span class="module-badge capstone">Module 7</span>
+        <div class="module-icon">🎯</div>
+        <h3>Valuation & Long-Term Decisions</h3>
+        <p class="module-description">
+          Apply valuation techniques to stocks and bonds. Master the Gordon Growth Model, dividend discount model, P/E multiples, and DCF analysis for real-world decisions.
+        </p>
+
+        <div class="module-topics">
+          <div class="module-topics-label">Topics</div>
+          <div class="topics-list">
+            <span class="topic-tag">Stock Valuation</span>
+            <span class="topic-tag">Gordon Growth</span>
+            <span class="topic-tag">DCF Analysis</span>
+            <span class="topic-tag">Bond Valuation</span>
+            <span class="topic-tag">Multiples</span>
+          </div>
+        </div>
+
+        <div class="module-progress">
+          <div class="progress-label">
+            <span>Module Progress</span>
+            <span class="completion-pct">35%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 35%"></div>
+          </div>
+        </div>
+
+        <div class="module-resources">
+          <div class="resources-label">Key Tools</div>
+          <div class="resource-links">
+            <a href="/tools/stock/gordon-growth.html" class="resource-link">
+              <span class="resource-icon">🔧</span> Gordon Growth Model
+            </a>
+            <a href="/tools/bond-price.html" class="resource-link">
+              <span class="resource-icon">🔧</span> Bond Price Calculator
+            </a>
+            <a href="/tools/stock/pe-valuation.html" class="resource-link">
+              <span class="resource-icon">🔧</span> P/E Valuation Tool
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 8: Special Topics & Integration -->
+      <div class="module-card" data-level="advanced">
+        <span class="module-badge capstone">Module 8</span>
+        <div class="module-icon">🔗</div>
+        <h3>Special Topics & Integration</h3>
+        <p class="module-description">
+          Synthesize course concepts: mergers & acquisitions, leasing decisions, dividend policy, and integrated financial management. Capstone project application.
+        </p>
+
+        <div class="module-topics">
+          <div class="module-topics-label">Topics</div>
+          <div class="topics-list">
+            <span class="topic-tag">M&A Basics</span>
+            <span class="topic-tag">Leasing Decisions</span>
+            <span class="topic-tag">Dividend Policy</span>
+            <span class="topic-tag">Financial Planning</span>
+            <span class="topic-tag">Capstone Project</span>
+          </div>
+        </div>
+
+        <div class="module-progress">
+          <div class="progress-label">
+            <span>Module Progress</span>
+            <span class="completion-pct">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="module-resources">
+          <div class="resources-label">Key Resources</div>
+          <div class="resource-links">
+            <a href="/tools/progress.html" class="resource-link">
+              <span class="resource-icon">📈</span> Course Progress Dashboard
+            </a>
+            <a href="#" class="resource-link">
+              <span class="resource-icon">📋</span> Capstone Project Guidelines
+            </a>
+            <a href="#" class="resource-link">
+              <span class="resource-icon">🎓</span> Final Exam Study Guide
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Learning Objectives -->
+    <section class="learning-objectives">
+      <h3>Course Learning Objectives</h3>
+      <ul class="objectives-list">
+        <li>Understand and apply the time value of money in financial decision-making</li>
+        <li>Analyze financial statements and interpret key financial ratios</li>
+        <li>Evaluate the risk-return relationship and apply the CAPM model</li>
+        <li>Use capital budgeting techniques (NPV, IRR) to evaluate projects</li>
+        <li>Calculate and interpret cost of capital and WACC for investment decisions</li>
+        <li>Apply working capital management principles to optimize cash flow</li>
+        <li>Value stocks and bonds using appropriate valuation models</li>
+        <li>Synthesize concepts to make integrated financial management decisions</li>
+      </ul>
+    </section>
+
+    <!-- Module Sequence -->
+    <section>
+      <h2 style="margin-bottom: 1.5rem;">Recommended Learning Path</h2>
+      <div class="module-sequence">
+        <div class="sequence-item active">
+          <div class="sequence-number">1</div>
+          <div class="sequence-title">Time Value of Money</div>
+        </div>
+        <div class="sequence-item">
+          <div class="sequence-number">2</div>
+          <div class="sequence-title">Financial Statement Analysis</div>
+        </div>
+        <div class="sequence-item">
+          <div class="sequence-number">3</div>
+          <div class="sequence-title">Risk and Return</div>
+        </div>
+        <div class="sequence-item">
+          <div class="sequence-number">4</div>
+          <div class="sequence-title">Capital Budgeting</div>
+        </div>
+        <div class="sequence-item">
+          <div class="sequence-number">5</div>
+          <div class="sequence-title">Cost of Capital</div>
+        </div>
+        <div class="sequence-item">
+          <div class="sequence-number">6</div>
+          <div class="sequence-title">Working Capital</div>
+        </div>
+        <div class="sequence-item">
+          <div class="sequence-number">7</div>
+          <div class="sequence-title">Valuation</div>
+        </div>
+        <div class="sequence-item">
+          <div class="sequence-number">8</div>
+          <div class="sequence-title">Special Topics</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>For educational use only · Not financial advice · Built for BAFN 302 @ UNC</p>
+    <p class="footer-brand">Powered & maintained by <a href="https://n3xg3nstudio.com" target="_blank" rel="noopener">n3xg3nstudio.com</a></p>
+  </footer>
+
+  <script src="/js/registry.js"></script>
+  <script>
+    // Filter functionality
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const moduleCards = document.querySelectorAll('.module-card');
+    const searchInput = document.getElementById('search');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.dataset.filter;
+        filterModules(filter, '');
+      });
+    });
+
+    function filterModules(level, searchTerm) {
+      moduleCards.forEach(card => {
+        const cardLevel = card.dataset.level;
+        const cardText = card.textContent.toLowerCase();
+        const matchesLevel = level === 'all' || cardLevel === level;
+        const matchesSearch = searchTerm === '' || cardText.includes(searchTerm.toLowerCase());
+
+        if (matchesLevel && matchesSearch) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // Search functionality
+    searchInput.addEventListener('input', (e) => {
+      const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+      filterModules(activeFilter, e.target.value);
+    });
+
+    // Calculate overall progress
+    function updateProgress() {
+      const progressElements = document.querySelectorAll('.completion-pct');
+      let total = 0;
+      progressElements.forEach(el => {
+        const pct = parseInt(el.textContent);
+        total += pct;
+      });
+      const average = Math.round(total / progressElements.length);
+      document.getElementById('avg-completion').textContent = average + '%';
+    }
+
+    updateProgress();
+  </script>
+</body>
+</html>

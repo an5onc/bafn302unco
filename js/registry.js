@@ -1,6 +1,13 @@
 // ===== Tool Registry =====
 const TOOL_REGISTRY = [
   {
+    id: 'modules',
+    title: 'Course Modules',
+    description: 'Navigate all BAFN 302 course modules with learning objectives, topics, progress tracking, and resource links.',
+    category: 'Course Management',
+    path: '/modules.html'
+  },
+  {
     id: 'progress',
     title: 'Course Progress Dashboard',
     description: 'Track your BAFN 302 progress with assignments, deadlines, grades, and course completion tracking.',
@@ -48,6 +55,13 @@ const TOOL_REGISTRY = [
     description: 'Generate full loan amortization table with payment breakdown and summary.',
     category: 'Time Value of Money',
     path: '/tools/amortization.html'
+  },
+  {
+    id: 'loan-amortization',
+    title: 'Advanced Loan Amortization',
+    description: 'Complete loan amortization with extra payments, interest savings calculator, and visual charts.',
+    category: 'Time Value of Money',
+    path: '/tools/loan-amortization.html'
   },
   {
     id: 'npv',
