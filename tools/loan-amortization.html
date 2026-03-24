@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Loan Amortization Calculator — BAFN 302</title>
+  <meta name="description" content="Generate complete loan amortization schedules showing principal, interest, and balance for each payment period.">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/tools.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo">
+      <a href="/" style="color: inherit; text-decoration: none;">
+        <span class="logo-icon">$</span>
+        <span class="logo-text"><em>BAFN 302</em> Toolkit</span>
+      </a>
+      <span class="course-badge">BAFN 302</span>
+    </div>
+    <div class="search-box">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="search" placeholder="Search tools..." autocomplete="off">
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumb">
+      <a href="/">Home</a> / <span>Loan Amortization Calculator</span>
+    </nav>
+
+    <div class="tool-header">
+      <h1>Loan Amortization Calculator</h1>
+      <p class="tool-description">Generate a complete amortization schedule showing how each payment is split between principal and interest over the life of a loan.</p>
+    </div>
+
+    <div class="tool-content">
+      <!-- Input Section -->
+      <div class="input-section">
+        <h2>Loan Parameters</h2>
+
+        <div class="input-group">
+          <label for="principal">Loan Amount ($)</label>
+          <input type="number" id="principal" placeholder="e.g., 250000" step="1000" min="0">
+          <span class="input-hint">The total amount borrowed</span>
+        </div>
+
+        <div class="input-group">
+          <label for="rate">Annual Interest Rate (%)</label>
+          <input type="number" id="rate" placeholder="e.g., 6.5" step="0.01" min="0">
+          <span class="input-hint">Nominal annual rate (APR)</span>
+        </div>
+
+        <div class="input-group">
+          <label for="years">Loan Term (Years)</label>
+          <input type="number" id="years" placeholder="e.g., 30" step="1" min="1" max="50">
+          <span class="input-hint">Total loan duration in years</span>
+        </div>
+
+        <div class="input-group">
+          <label for="frequency">Payment Frequency</label>
+          <select id="frequency">
+            <option value="12" selected>Monthly</option>
+            <option value="26">Bi-weekly</option>
+            <option value="24">Semi-monthly</option>
+            <option value="4">Quarterly</option>
+            <option value="1">Annual</option>
+          </select>
+          <span class="input-hint">How often payments are made</span>
+        </div>
+
+        <div class="input-group">
+          <label for="extra">Extra Payment (Optional)</label>
+          <input type="number" id="extra" placeholder="e.g., 100" step="10" min="0" value="0">
+          <span class="input-hint">Additional principal payment per period</span>
+        </div>
+
+        <button class="calculate-btn" onclick="calculateAmortization()">Generate Schedule</button>
+      </div>
+
+      <!-- Results Section -->
+      <div class="results-section" id="results" style="display:none;">
+        <h2>Loan Summary</h2>
+
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="summary-label">Regular Payment</div>
+            <div class="summary-value" id="payment-amount">$0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Total Interest</div>
+            <div class="summary-value" id="total-interest">$0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Total Paid</div>
+            <div class="summary-value" id="total-paid">$0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Interest Saved</div>
+            <div class="summary-value highlight" id="interest-saved">$0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Time Saved</div>
+            <div class="summary-value highlight" id="time-saved">0 months</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Payoff Date</div>
+            <div class="summary-value" id="payoff-date">-</div>
+          </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="chart-container">
+          <h3>Principal vs Interest Over Time</h3>
+          <canvas id="amortChart" width="800" height="300"></canvas>
+        </div>
+
+        <!-- Amortization Table -->
+        <div class="table-container">
+          <h3>Amortization Schedule</h3>
+          <div class="table-controls">
+            <label>
+              <input type="checkbox" id="show-annual" onchange="toggleAnnualSummary()">
+              Show Annual Summary Only
+            </label>
+            <button class="export-btn" onclick="exportToCSV()">Export to CSV</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table id="amort-table">
+              <thead>
+                <tr>
+                  <th>Payment #</th>
+                  <th>Date</th>
+                  <th>Payment</th>
+                  <th>Principal</th>
+                  <th>Interest</th>
+                  <th>Balance</th>
+                  <th>Cumulative Interest</th>
+                </tr>
+              </thead>
+              <tbody id="schedule-body">
+                <!-- Populated by JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formula Reference -->
+      <div class="formula-box">
+        <h3>Formula</h3>
+        <div class="formula">
+          <strong>Monthly Payment:</strong><br>
+          PMT = P × [r(1+r)^n] / [(1+r)^n - 1]<br><br>
+          Where:<br>
+          • P = Principal loan amount<br>
+          • r = Period interest rate (annual rate / periods per year)<br>
+          • n = Total number of payments
+        </div>
+      </div>
+
+      <!-- HP 10bII+ Steps -->
+      <div class="hp-steps">
+        <h3>HP 10bII+ Calculator Steps</h3>
+        <ol>
+          <li>Clear: <kbd>SHIFT</kbd> <kbd>C ALL</kbd></li>
+          <li>Set periods per year: <kbd>12</kbd> <kbd>SHIFT</kbd> <kbd>P/YR</kbd></li>
+          <li>Enter loan amount: <kbd>[amount]</kbd> <kbd>PV</kbd></li>
+          <li>Enter interest rate: <kbd>[rate]</kbd> <kbd>I/YR</kbd></li>
+          <li>Enter number of payments: <kbd>[years × 12]</kbd> <kbd>N</kbd></li>
+          <li>Calculate payment: <kbd>PMT</kbd> (result will be negative)</li>
+          <li>For amortization: <kbd>SHIFT</kbd> <kbd>AMORT</kbd></li>
+        </ol>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>For educational use only · Not financial advice · Built for BAFN 302 @ UNC</p>
+  </footer>
+
+  <style>
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .summary-card {
+      background: var(--bg-secondary);
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .summary-label {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .summary-value {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: var(--text-primary);
+    }
+
+    .summary-value.highlight {
+      color: var(--color-success);
+    }
+
+    .chart-container {
+      margin: 2rem 0;
+      padding: 1.5rem;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+    }
+
+    .chart-container h3 {
+      margin-bottom: 1rem;
+    }
+
+    .table-container {
+      margin: 2rem 0;
+    }
+
+    .table-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 1rem 0;
+    }
+
+    .export-btn {
+      padding: 0.5rem 1rem;
+      background: var(--color-secondary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      max-height: 500px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+    }
+
+    #amort-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    #amort-table th {
+      background: var(--bg-secondary);
+      padding: 0.75rem;
+      text-align: left;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    #amort-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    #amort-table tbody tr:hover {
+      background: var(--bg-hover);
+    }
+
+    .annual-summary {
+      background: var(--bg-highlight);
+      font-weight: bold;
+    }
+  </style>
+
+  <script>
+    let scheduleData = [];
+
+    function calculateAmortization() {
+      const principal = parseFloat(document.getElementById('principal').value) || 0;
+      const annualRate = parseFloat(document.getElementById('rate').value) || 0;
+      const years = parseFloat(document.getElementById('years').value) || 0;
+      const frequency = parseInt(document.getElementById('frequency').value) || 12;
+      const extraPayment = parseFloat(document.getElementById('extra').value) || 0;
+
+      if (principal <= 0 || annualRate <= 0 || years <= 0) {
+        alert('Please enter valid loan parameters');
+        return;
+      }
+
+      const periodRate = annualRate / 100 / frequency;
+      const totalPayments = years * frequency;
+
+      // Calculate regular payment using formula
+      const payment = principal * (periodRate * Math.pow(1 + periodRate, totalPayments)) /
+                      (Math.pow(1 + periodRate, totalPayments) - 1);
+
+      // Generate schedule
+      scheduleData = [];
+      let balance = principal;
+      let cumulativeInterest = 0;
+      let totalPaid = 0;
+      const startDate = new Date();
+
+      for (let i = 1; i <= totalPayments && balance > 0.01; i++) {
+        const interest = balance * periodRate;
+        let principalPayment = payment - interest + extraPayment;
+
+        // Handle final payment
+        if (principalPayment > balance) {
+          principalPayment = balance;
+        }
+
+        balance -= principalPayment;
+        cumulativeInterest += interest;
+        totalPaid += payment + extraPayment;
+
+        const paymentDate = new Date(startDate);
+        if (frequency === 12) {
+          paymentDate.setMonth(paymentDate.getMonth() + i);
+        } else {
+          paymentDate.setDate(paymentDate.getDate() + Math.floor(365 / frequency * i));
+        }
+
+        scheduleData.push({
+          number: i,
+          date: paymentDate,
+          payment: payment + extraPayment,
+          principal: principalPayment,
+          interest: interest,
+          balance: Math.max(0, balance),
+          cumulativeInterest: cumulativeInterest
+        });
+
+        if (balance <= 0.01) break;
+      }
+
+      displayResults(payment, principal, cumulativeInterest, totalPaid);
+      drawChart();
+      populateTable();
+    }
+
+    function displayResults(payment, principal, totalInterest, totalPaid) {
+      document.getElementById('results').style.display = 'block';
+
+      // Calculate savings from extra payments
+      const extra = parseFloat(document.getElementById('extra').value) || 0;
+      const frequency = parseInt(document.getElementById('frequency').value) || 12;
+      const annualRate = parseFloat(document.getElementById('rate').value) || 0;
+      const years = parseFloat(document.getElementById('years').value) || 0;
+      const periodRate = annualRate / 100 / frequency;
+      const totalPayments = years * frequency;
+
+      let normalInterest = 0;
+      if (extra === 0) {
+        normalInterest = totalInterest;
+      } else {
+        // Calculate interest without extra payments
+        let tempBalance = principal;
+        for (let i = 1; i <= totalPayments; i++) {
+          const interest = tempBalance * periodRate;
+          const principalPayment = payment - interest;
+          tempBalance -= principalPayment;
+          normalInterest += interest;
+          if (tempBalance <= 0.01) break;
+        }
+      }
+
+      const interestSaved = normalInterest - totalInterest;
+      const monthsSaved = totalPayments - scheduleData.length;
+
+      document.getElementById('payment-amount').textContent = `$${payment.toFixed(2)}`;
+      document.getElementById('total-interest').textContent = `$${totalInterest.toFixed(2)}`;
+      document.getElementById('total-paid').textContent = `$${totalPaid.toFixed(2)}`;
+      document.getElementById('interest-saved').textContent = `$${interestSaved.toFixed(2)}`;
+      document.getElementById('time-saved').textContent = `${monthsSaved} payments`;
+
+      const lastPayment = scheduleData[scheduleData.length - 1];
+      if (lastPayment) {
+        document.getElementById('payoff-date').textContent =
+          lastPayment.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+      }
+    }
+
+    function drawChart() {
+      const canvas = document.getElementById('amortChart');
+      const ctx = canvas.getContext('2d');
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Prepare data for annual summary
+      const annualData = [];
+      let currentYear = scheduleData[0].date.getFullYear();
+      let yearPrincipal = 0;
+      let yearInterest = 0;
+
+      scheduleData.forEach((payment, index) => {
+        const paymentYear = payment.date.getFullYear();
+
+        if (paymentYear !== currentYear) {
+          annualData.push({
+            year: currentYear,
+            principal: yearPrincipal,
+            interest: yearInterest
+          });
+          currentYear = paymentYear;
+          yearPrincipal = 0;
+          yearInterest = 0;
+        }
+
+        yearPrincipal += payment.principal;
+        yearInterest += payment.interest;
+
+        if (index === scheduleData.length - 1) {
+          annualData.push({
+            year: currentYear,
+            principal: yearPrincipal,
+            interest: yearInterest
+          });
+        }
+      });
+
+      // Draw chart
+      const maxValue = Math.max(...annualData.map(d => d.principal + d.interest));
+      const barWidth = (canvas.width - 100) / annualData.length;
+      const chartHeight = canvas.height - 60;
+
+      // Draw axes
+      ctx.strokeStyle = '#ccc';
+      ctx.beginPath();
+      ctx.moveTo(50, 10);
+      ctx.lineTo(50, chartHeight);
+      ctx.lineTo(canvas.width - 20, chartHeight);
+      ctx.stroke();
+
+      // Draw bars
+      annualData.forEach((data, index) => {
+        const x = 60 + index * barWidth;
+        const principalHeight = (data.principal / maxValue) * (chartHeight - 20);
+        const interestHeight = (data.interest / maxValue) * (chartHeight - 20);
+
+        // Principal bar
+        ctx.fillStyle = '#4CAF50';
+        ctx.fillRect(x, chartHeight - principalHeight, barWidth * 0.35, principalHeight);
+
+        // Interest bar
+        ctx.fillStyle = '#FF9800';
+        ctx.fillRect(x + barWidth * 0.4, chartHeight - interestHeight, barWidth * 0.35, interestHeight);
+
+        // Year label
+        ctx.fillStyle = '#666';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(data.year, x + barWidth * 0.35, chartHeight + 15);
+      });
+
+      // Legend
+      ctx.fillStyle = '#4CAF50';
+      ctx.fillRect(canvas.width - 150, 20, 15, 15);
+      ctx.fillStyle = '#666';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('Principal', canvas.width - 130, 32);
+
+      ctx.fillStyle = '#FF9800';
+      ctx.fillRect(canvas.width - 150, 40, 15, 15);
+      ctx.fillStyle = '#666';
+      ctx.fillText('Interest', canvas.width - 130, 52);
+    }
+
+    function populateTable() {
+      const tbody = document.getElementById('schedule-body');
+      tbody.innerHTML = '';
+
+      scheduleData.forEach(payment => {
+        const row = tbody.insertRow();
+        row.insertCell(0).textContent = payment.number;
+        row.insertCell(1).textContent = payment.date.toLocaleDateString();
+        row.insertCell(2).textContent = `$${payment.payment.toFixed(2)}`;
+        row.insertCell(3).textContent = `$${payment.principal.toFixed(2)}`;
+        row.insertCell(4).textContent = `$${payment.interest.toFixed(2)}`;
+        row.insertCell(5).textContent = `$${payment.balance.toFixed(2)}`;
+        row.insertCell(6).textContent = `$${payment.cumulativeInterest.toFixed(2)}`;
+      });
+    }
+
+    function toggleAnnualSummary() {
+      // Implementation for annual summary view toggle
+      const showAnnual = document.getElementById('show-annual').checked;
+      if (showAnnual) {
+        // Group by year and show summary
+        alert('Annual summary view not yet implemented');
+        document.getElementById('show-annual').checked = false;
+      }
+    }
+
+    function exportToCSV() {
+      let csv = 'Payment #,Date,Payment,Principal,Interest,Balance,Cumulative Interest\n';
+
+      scheduleData.forEach(payment => {
+        csv += `${payment.number},${payment.date.toLocaleDateString()},`;
+        csv += `${payment.payment.toFixed(2)},${payment.principal.toFixed(2)},`;
+        csv += `${payment.interest.toFixed(2)},${payment.balance.toFixed(2)},`;
+        csv += `${payment.cumulativeInterest.toFixed(2)}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'loan_amortization.csv';
+      a.click();
+    }
+  </script>
+</body>
+</html>

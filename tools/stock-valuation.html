@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Stock Valuation Calculator - BAFN 302</title>
+  <meta name="description" content="Calculate stock values using dividend discount models (DDM) - Zero Growth, Constant Growth (Gordon Model), and Two-Stage Growth">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/tool.css">
+</head>
+<body>
+  <header class="tool-header">
+    <a href="/" class="back-link">← Dashboard</a>
+    <h1>Stock Valuation Calculator</h1>
+    <span class="category-badge">Equity</span>
+  </header>
+
+  <main class="container">
+    <div class="tool-intro">
+      <p>Calculate the intrinsic value of stocks using dividend discount models (DDM). Choose from zero growth, constant growth (Gordon Model), or two-stage growth models.</p>
+      <div class="formula-preview">
+        <strong>Gordon Growth Model:</strong> P₀ = D₁ / (r - g)
+      </div>
+    </div>
+
+    <!-- Model Selection -->
+    <div class="input-section">
+      <h2>Select Valuation Model</h2>
+      <div class="model-selector">
+        <button class="model-btn active" data-model="constant">Constant Growth (Gordon)</button>
+        <button class="model-btn" data-model="zero">Zero Growth</button>
+        <button class="model-btn" data-model="twostage">Two-Stage Growth</button>
+      </div>
+    </div>
+
+    <!-- Input Fields -->
+    <div class="input-section">
+      <h2>Input Parameters</h2>
+
+      <!-- Common Inputs -->
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="current-dividend">Current Annual Dividend (D₀)</label>
+          <div class="input-wrapper">
+            <span class="input-prefix">$</span>
+            <input type="number" id="current-dividend" step="0.01" placeholder="2.50">
+          </div>
+          <span class="input-hint">Last dividend paid per share</span>
+        </div>
+
+        <div class="input-group">
+          <label for="required-return">Required Rate of Return (r)</label>
+          <div class="input-wrapper">
+            <input type="number" id="required-return" step="0.1" placeholder="10">
+            <span class="input-suffix">%</span>
+          </div>
+          <span class="input-hint">Your expected return</span>
+        </div>
+
+        <!-- Constant Growth Inputs -->
+        <div class="input-group model-specific constant-inputs">
+          <label for="growth-rate">Dividend Growth Rate (g)</label>
+          <div class="input-wrapper">
+            <input type="number" id="growth-rate" step="0.1" placeholder="3">
+            <span class="input-suffix">%</span>
+          </div>
+          <span class="input-hint">Expected annual growth</span>
+        </div>
+
+        <!-- Two-Stage Growth Inputs -->
+        <div class="input-group model-specific twostage-inputs" style="display:none;">
+          <label for="growth-rate-1">Stage 1 Growth Rate</label>
+          <div class="input-wrapper">
+            <input type="number" id="growth-rate-1" step="0.1" placeholder="15">
+            <span class="input-suffix">%</span>
+          </div>
+          <span class="input-hint">High growth phase</span>
+        </div>
+
+        <div class="input-group model-specific twostage-inputs" style="display:none;">
+          <label for="stage1-years">Stage 1 Duration</label>
+          <div class="input-wrapper">
+            <input type="number" id="stage1-years" step="1" placeholder="5">
+            <span class="input-suffix">years</span>
+          </div>
+          <span class="input-hint">Years of high growth</span>
+        </div>
+
+        <div class="input-group model-specific twostage-inputs" style="display:none;">
+          <label for="growth-rate-2">Stage 2 Growth Rate</label>
+          <div class="input-wrapper">
+            <input type="number" id="growth-rate-2" step="0.1" placeholder="3">
+            <span class="input-suffix">%</span>
+          </div>
+          <span class="input-hint">Stable growth phase</span>
+        </div>
+      </div>
+
+      <button id="calculate-btn" class="calculate-btn">Calculate Stock Value</button>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="results-section" style="display:none;">
+      <h2>Valuation Results</h2>
+
+      <div class="result-grid">
+        <div class="result-card primary">
+          <span class="result-label">Intrinsic Stock Value</span>
+          <span class="result-value" id="stock-value">$0.00</span>
+          <span class="result-hint">Fair value per share</span>
+        </div>
+
+        <div class="result-card">
+          <span class="result-label">Next Dividend (D₁)</span>
+          <span class="result-value" id="next-dividend">$0.00</span>
+        </div>
+
+        <div class="result-card">
+          <span class="result-label">Dividend Yield</span>
+          <span class="result-value" id="dividend-yield">0.00%</span>
+        </div>
+
+        <div class="result-card">
+          <span class="result-label">Capital Gains Yield</span>
+          <span class="result-value" id="capital-gains">0.00%</span>
+        </div>
+      </div>
+
+      <!-- Valuation Analysis -->
+      <div class="analysis-section">
+        <h3>Market Comparison</h3>
+        <div class="input-group">
+          <label for="market-price">Current Market Price</label>
+          <div class="input-wrapper">
+            <span class="input-prefix">$</span>
+            <input type="number" id="market-price" step="0.01" placeholder="45.00">
+            <button id="compare-btn" class="secondary-btn">Compare</button>
+          </div>
+        </div>
+
+        <div id="comparison-result" class="comparison-box" style="display:none;">
+          <div class="comparison-status">
+            <span id="comparison-label"></span>
+            <span id="comparison-value"></span>
+          </div>
+          <p id="comparison-text"></p>
+        </div>
+      </div>
+
+      <!-- Calculation Breakdown -->
+      <div class="breakdown-section">
+        <h3>Calculation Details</h3>
+        <div id="calculation-steps" class="calculation-steps"></div>
+      </div>
+
+      <!-- Sensitivity Analysis -->
+      <div class="sensitivity-section">
+        <h3>Sensitivity Analysis</h3>
+        <table class="sensitivity-table">
+          <thead>
+            <tr>
+              <th>Parameter</th>
+              <th>-20%</th>
+              <th>-10%</th>
+              <th>Base</th>
+              <th>+10%</th>
+              <th>+20%</th>
+            </tr>
+          </thead>
+          <tbody id="sensitivity-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Model state
+    let currentModel = 'constant';
+
+    // Model selector
+    document.querySelectorAll('.model-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentModel = e.target.dataset.model;
+        updateInputVisibility();
+      });
+    });
+
+    function updateInputVisibility() {
+      // Hide all model-specific inputs
+      document.querySelectorAll('.model-specific').forEach(el => el.style.display = 'none');
+
+      // Show relevant inputs
+      if (currentModel === 'constant') {
+        document.querySelectorAll('.constant-inputs').forEach(el => el.style.display = 'block');
+      } else if (currentModel === 'twostage') {
+        document.querySelectorAll('.twostage-inputs').forEach(el => el.style.display = 'block');
+      }
+      // Zero growth doesn't need additional inputs
+    }
+
+    // Calculate button
+    document.getElementById('calculate-btn').addEventListener('click', calculateValue);
+
+    function calculateValue() {
+      const D0 = parseFloat(document.getElementById('current-dividend').value) || 0;
+      const r = parseFloat(document.getElementById('required-return').value) / 100 || 0;
+
+      let stockValue = 0;
+      let D1 = 0;
+      let calculationSteps = '';
+
+      if (currentModel === 'zero') {
+        // Zero growth model: P0 = D0 / r
+        D1 = D0;
+        stockValue = D0 / r;
+        calculationSteps = `
+          <p><strong>Zero Growth Model:</strong></p>
+          <p>P₀ = D₀ / r</p>
+          <p>P₀ = $${D0.toFixed(2)} / ${(r * 100).toFixed(1)}%</p>
+          <p>P₀ = <strong>$${stockValue.toFixed(2)}</strong></p>
+        `;
+      } else if (currentModel === 'constant') {
+        // Gordon growth model: P0 = D1 / (r - g)
+        const g = parseFloat(document.getElementById('growth-rate').value) / 100 || 0;
+        D1 = D0 * (1 + g);
+        stockValue = D1 / (r - g);
+        calculationSteps = `
+          <p><strong>Gordon Growth Model:</strong></p>
+          <p>D₁ = D₀ × (1 + g) = $${D0.toFixed(2)} × ${(1 + g).toFixed(3)} = $${D1.toFixed(2)}</p>
+          <p>P₀ = D₁ / (r - g)</p>
+          <p>P₀ = $${D1.toFixed(2)} / (${(r * 100).toFixed(1)}% - ${(g * 100).toFixed(1)}%)</p>
+          <p>P₀ = $${D1.toFixed(2)} / ${((r - g) * 100).toFixed(2)}%</p>
+          <p>P₀ = <strong>$${stockValue.toFixed(2)}</strong></p>
+        `;
+      } else if (currentModel === 'twostage') {
+        // Two-stage growth model
+        const g1 = parseFloat(document.getElementById('growth-rate-1').value) / 100 || 0;
+        const g2 = parseFloat(document.getElementById('growth-rate-2').value) / 100 || 0;
+        const n = parseInt(document.getElementById('stage1-years').value) || 5;
+
+        // Calculate PV of dividends in stage 1
+        let pvStage1 = 0;
+        let dividend = D0;
+        for (let t = 1; t <= n; t++) {
+          dividend = dividend * (1 + g1);
+          pvStage1 += dividend / Math.pow(1 + r, t);
+        }
+
+        // Calculate terminal value
+        const Dn1 = D0 * Math.pow(1 + g1, n) * (1 + g2);
+        const terminalValue = Dn1 / (r - g2);
+        const pvTerminal = terminalValue / Math.pow(1 + r, n);
+
+        stockValue = pvStage1 + pvTerminal;
+        D1 = D0 * (1 + g1);
+
+        calculationSteps = `
+          <p><strong>Two-Stage Growth Model:</strong></p>
+          <p>Stage 1: ${n} years at ${(g1 * 100).toFixed(1)}% growth</p>
+          <p>PV of Stage 1 dividends = $${pvStage1.toFixed(2)}</p>
+          <p>Stage 2: Perpetual growth at ${(g2 * 100).toFixed(1)}%</p>
+          <p>Terminal value at year ${n} = $${terminalValue.toFixed(2)}</p>
+          <p>PV of terminal value = $${pvTerminal.toFixed(2)}</p>
+          <p>P₀ = Stage 1 PV + Terminal PV = <strong>$${stockValue.toFixed(2)}</strong></p>
+        `;
+      }
+
+      // Display results
+      document.getElementById('stock-value').textContent = `$${stockValue.toFixed(2)}`;
+      document.getElementById('next-dividend').textContent = `$${D1.toFixed(2)}`;
+      document.getElementById('dividend-yield').textContent = `${((D1 / stockValue) * 100).toFixed(2)}%`;
+
+      const capitalGains = currentModel === 'constant'
+        ? parseFloat(document.getElementById('growth-rate').value) || 0
+        : currentModel === 'twostage'
+        ? parseFloat(document.getElementById('growth-rate-2').value) || 0
+        : 0;
+      document.getElementById('capital-gains').textContent = `${capitalGains.toFixed(2)}%`;
+
+      document.getElementById('calculation-steps').innerHTML = calculationSteps;
+      document.getElementById('results').style.display = 'block';
+
+      // Perform sensitivity analysis
+      performSensitivity();
+    }
+
+    // Compare with market price
+    document.getElementById('compare-btn').addEventListener('click', () => {
+      const intrinsicValue = parseFloat(document.getElementById('stock-value').textContent.replace('$', ''));
+      const marketPrice = parseFloat(document.getElementById('market-price').value);
+
+      if (marketPrice) {
+        const difference = intrinsicValue - marketPrice;
+        const percentDiff = (difference / marketPrice) * 100;
+
+        let status, text;
+        if (percentDiff > 10) {
+          status = 'UNDERVALUED';
+          text = `The stock appears undervalued by ${Math.abs(percentDiff).toFixed(1)}%. Consider buying.`;
+        } else if (percentDiff < -10) {
+          status = 'OVERVALUED';
+          text = `The stock appears overvalued by ${Math.abs(percentDiff).toFixed(1)}%. Consider avoiding or selling.`;
+        } else {
+          status = 'FAIRLY VALUED';
+          text = `The stock appears fairly valued (within 10% of intrinsic value).`;
+        }
+
+        document.getElementById('comparison-label').textContent = status;
+        document.getElementById('comparison-value').textContent = `${percentDiff > 0 ? '+' : ''}${percentDiff.toFixed(1)}%`;
+        document.getElementById('comparison-text').textContent = text;
+        document.getElementById('comparison-result').style.display = 'block';
+
+        // Style based on status
+        const box = document.querySelector('.comparison-status');
+        box.className = 'comparison-status';
+        if (status === 'UNDERVALUED') box.classList.add('undervalued');
+        else if (status === 'OVERVALUED') box.classList.add('overvalued');
+        else box.classList.add('fair');
+      }
+    });
+
+    // Sensitivity analysis
+    function performSensitivity() {
+      const baseParams = getBaseParameters();
+      const scenarios = [-0.2, -0.1, 0, 0.1, 0.2];
+
+      const sensitivityData = [];
+
+      // Test required return sensitivity
+      const returnRow = ['Required Return'];
+      scenarios.forEach(change => {
+        const newR = baseParams.r * (1 + change);
+        const value = calculateWithParams({ ...baseParams, r: newR });
+        returnRow.push(`$${value.toFixed(2)}`);
+      });
+      sensitivityData.push(returnRow);
+
+      // Test growth rate sensitivity (if applicable)
+      if (currentModel !== 'zero') {
+        const growthRow = ['Growth Rate'];
+        scenarios.forEach(change => {
+          const newG = baseParams.g * (1 + change);
+          const value = calculateWithParams({ ...baseParams, g: newG });
+          growthRow.push(`$${value.toFixed(2)}`);
+        });
+        sensitivityData.push(growthRow);
+      }
+
+      // Display sensitivity table
+      const tbody = document.getElementById('sensitivity-body');
+      tbody.innerHTML = sensitivityData.map(row =>
+        `<tr>${row.map((cell, i) => `<td${i === 3 ? ' class="base-case"' : ''}>${cell}</td>`).join('')}</tr>`
+      ).join('');
+    }
+
+    function getBaseParameters() {
+      const D0 = parseFloat(document.getElementById('current-dividend').value) || 0;
+      const r = parseFloat(document.getElementById('required-return').value) / 100 || 0;
+
+      if (currentModel === 'constant') {
+        return {
+          D0,
+          r,
+          g: parseFloat(document.getElementById('growth-rate').value) / 100 || 0,
+          model: 'constant'
+        };
+      } else if (currentModel === 'twostage') {
+        return {
+          D0,
+          r,
+          g: parseFloat(document.getElementById('growth-rate-2').value) / 100 || 0,
+          g1: parseFloat(document.getElementById('growth-rate-1').value) / 100 || 0,
+          n: parseInt(document.getElementById('stage1-years').value) || 5,
+          model: 'twostage'
+        };
+      } else {
+        return { D0, r, model: 'zero' };
+      }
+    }
+
+    function calculateWithParams(params) {
+      if (params.model === 'zero') {
+        return params.D0 / params.r;
+      } else if (params.model === 'constant') {
+        const D1 = params.D0 * (1 + params.g);
+        return D1 / (params.r - params.g);
+      } else if (params.model === 'twostage') {
+        let pvStage1 = 0;
+        let dividend = params.D0;
+        for (let t = 1; t <= params.n; t++) {
+          dividend = dividend * (1 + params.g1);
+          pvStage1 += dividend / Math.pow(1 + params.r, t);
+        }
+        const Dn1 = params.D0 * Math.pow(1 + params.g1, params.n) * (1 + params.g);
+        const terminalValue = Dn1 / (params.r - params.g);
+        const pvTerminal = terminalValue / Math.pow(1 + params.r, params.n);
+        return pvStage1 + pvTerminal;
+      }
+      return 0;
+    }
+  </script>
+
+  <style>
+    .model-selector {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .model-btn {
+      flex: 1;
+      padding: 0.75rem;
+      border: 2px solid #e0e0e0;
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .model-btn.active {
+      background: #1e3a5f;
+      color: white;
+      border-color: #1e3a5f;
+    }
+
+    .comparison-box {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      background: #f8f9fa;
+    }
+
+    .comparison-status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .comparison-status.undervalued {
+      color: #28a745;
+    }
+
+    .comparison-status.overvalued {
+      color: #dc3545;
+    }
+
+    .comparison-status.fair {
+      color: #ffc107;
+    }
+
+    .sensitivity-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .sensitivity-table th,
+    .sensitivity-table td {
+      padding: 0.5rem;
+      text-align: center;
+      border: 1px solid #e0e0e0;
+    }
+
+    .sensitivity-table th {
+      background: #f8f9fa;
+      font-weight: bold;
+    }
+
+    .sensitivity-table td.base-case {
+      background: #e3f2fd;
+      font-weight: bold;
+    }
+
+    .secondary-btn {
+      padding: 0.5rem 1rem;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 0.5rem;
+    }
+
+    .secondary-btn:hover {
+      background: #5a6268;
+    }
+  </style>
+</body>
+</html>
