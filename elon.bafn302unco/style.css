@@ -507,13 +507,12 @@ th {
 
 /* ===== LANDING PAGE ===== */
 .landing-hero {
-  min-height: 85vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding: 80px 20px;
+  padding: 60px 20px 40px;
   position: relative;
 }
 
@@ -773,6 +772,18 @@ th {
 /* ===== COMPARISON BAR CHART SECTION ===== */
 .comparison-section {
   padding: 24px;
+}
+
+.comparison-section canvas,
+.chart-card canvas {
+  width: 100% !important;
+  max-height: 360px !important;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 360px;
+  width: 100%;
 }
 
 /* ===== RESPONSIVE ===== */
