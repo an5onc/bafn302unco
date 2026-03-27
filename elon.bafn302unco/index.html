@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio Overview · elon.BAFN302unco</title>
+  <meta name="description" content="Portfolio overview page for the BAFN 302 stock project." />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="page-shell">
+    <nav class="site-nav card">
+      <div class="brand">
+        <div class="nav-eyebrow">BAFN 302 · Essentials of Finance</div>
+        <div class="brand-title">elon.BAFN302unco</div>
+        <div class="brand-subtitle">Five-Year Buy-and-Track Market Project</div>
+      </div>
+      <div class="nav-links">
+        <a href="home.html">Home</a>
+        <a href="index.html">Portfolio</a>
+        <a href="tesla.html">Tesla</a>
+        <a href="spy.html">SPY</a>
+        <a href="qqq.html">QQQ</a>
+        <a href="vug.html">VUG</a>
+        <a href="agg.html">AGG</a>
+        <a href="musk-empire-explorer.html">Explorer</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Portfolio Page</p>
+        <h1>Five-Position Portfolio Overview</h1>
+        <p class="hero-text">This page combines the five required positions from the project: TSLA, SPY, QQQ, VUG, and AGG. Each investment stands alone in the assignment, but this page helps explain how the full $50,000 would have behaved as one portfolio by the March 27, 2026 progress checkpoint.</p>
+        <div class="hero-tags">
+          <span>$50,000 total starting value</span>
+          <span>Buy date: Jan 5, 2021</span>
+          <span>Progress check: Mar 27, 2026</span>
+          <span>Final class due date: Apr 23, 2026</span>
+        </div>
+      </div>
+      <div class="hero-panel card">
+        <div class="panel-label">Combined Portfolio</div>
+        <div class="ticker red">PORT</div>
+        <div class="hero-metric-row">
+          <div>
+            <div class="metric-label">Ending Value</div>
+            <div class="metric-value gain">$75,050.78</div>
+          </div>
+          <div>
+            <div class="metric-label">Gain / Loss</div>
+            <div class="metric-value gain">+$25,050.78</div>
+          </div>
+        </div>
+        <div class="hero-metric-row">
+          <div>
+            <div class="metric-label">Total Return</div>
+            <div class="metric-value gain">50.10%</div>
+          </div>
+          <div>
+            <div class="metric-label">CAGR</div>
+            <div class="metric-value gain">8.09%</div>
+          </div>
+        </div>
+        <p class="hero-note">This page is useful for your reflection section because it shows how diversification changed the overall experience versus owning Tesla alone.</p>
+      </div>
+    </header>
+
+    <main>
+      <section class="metrics-grid">
+        <article class="card metric-card">
+          <div class="metric-label">Best Performer</div>
+          <div class="metric-xl">QQQ</div>
+          <p>QQQ reached $18,041.94, the highest ending value on the worksheet.</p>
+        </article>
+        <article class="card metric-card">
+          <div class="metric-label">Most Stable Sleeve</div>
+          <div class="metric-xl">AGG</div>
+          <p>AGG served as the bond fund anchor even though it was negative at the checkpoint.</p>
+        </article>
+        <article class="card metric-card">
+          <div class="metric-label">Equity Strength</div>
+          <div class="metric-xl">4 / 5</div>
+          <p>Four of the five holdings were above their original $10,000 values.</p>
+        </article>
+        <article class="card metric-card">
+          <div class="metric-label">Diversification Lesson</div>
+          <div class="metric-xl">Balanced</div>
+          <p>Combining index, growth, bond, and individual stock exposure smoothed the overall project story.</p>
+        </article>
+      </section>
+
+      <section class="two-col-section">
+        <article class="card chart-card">
+          <div class="section-heading">
+            <h2>Portfolio Allocation at the Checkpoint</h2>
+            <p>Share of the combined ending value represented by each position.</p>
+          </div>
+          <canvas id="portfolioChart" aria-label="Portfolio composition chart"></canvas>
+        </article>
+        <article class="card breakdown-card">
+          <div class="section-heading">
+            <h2>Why this page matters</h2>
+          </div>
+          <ul class="portfolio-breakdown">
+            <li><strong>Tesla</strong> added company-specific upside and volatility.</li>
+            <li><strong>SPY</strong> represented the broad U.S. stock market benchmark.</li>
+            <li><strong>QQQ</strong> and <strong>VUG</strong> emphasized growth-stock exposure.</li>
+            <li><strong>AGG</strong> provided fixed-income exposure and showed how bonds can behave differently than stocks.</li>
+            <li>Together, the five investments turned $50,000 into <strong>$75,050.78</strong> by the progress-report date.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="card table-card">
+        <div class="section-heading">
+          <h2>Full Portfolio Table</h2>
+          <p>This is the clean master table you can reuse in your PDF, website screenshots, or presentation.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Investment</th>
+                <th>Buy Price</th>
+                <th>Shares</th>
+                <th>3/27/26 Price</th>
+                <th>Ending Value</th>
+                <th>Gain / Loss</th>
+                <th>Total Return</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Tesla (TSLA)</td><td>$245.04</td><td>40.81</td><td>$361.83</td><td>$14,766.28</td><td class="gain">+$4,766.28</td><td>47.66%</td></tr>
+              <tr><td>SPY</td><td>$371.33</td><td>26.93</td><td>$634.09</td><td>$17,076.04</td><td class="gain">+$7,076.04</td><td>70.76%</td></tr>
+              <tr><td>QQQ</td><td>$311.86</td><td>32.07</td><td>$562.58</td><td>$18,041.94</td><td class="gain">+$8,041.94</td><td>80.42%</td></tr>
+              <tr><td>VUG</td><td>$251.28</td><td>39.80</td><td>$422.37</td><td>$16,810.33</td><td class="gain">+$6,810.33</td><td>68.10%</td></tr>
+              <tr><td>AGG</td><td>$117.92</td><td>84.80</td><td>$98.54</td><td>$8,356.19</td><td class="loss">-$1,643.81</td><td>-16.44%</td></tr>
+              <tr class="highlight-row"><td>Total Portfolio</td><td>—</td><td>—</td><td>—</td><td>$75,050.78</td><td class="gain">+$25,050.78</td><td>50.10%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card timeline-card">
+        <div class="section-heading">
+          <h2>Portfolio Timeline</h2>
+          <p>A combined timeline showing how the five positions help tell the full market story.</p>
+        </div>
+        <div class="timeline">
+          <article class="timeline-item"><div class="timeline-date">Jan 5, 2021</div><div class="timeline-dot"></div><div class="timeline-content"><h3>All five investments are purchased</h3><p>The project starts with five separate $10,000 positions, for a combined simulated portfolio value of $50,000.</p></div></article>
+          <article class="timeline-item"><div class="timeline-date">2021</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Growth and equity momentum</h3><p>Broad equity and growth exposure were supported by strong post-pandemic market momentum. Tesla, QQQ, and VUG all fit naturally into that narrative.</p></div></article>
+          <article class="timeline-item"><div class="timeline-date">2022</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Rising rates change the environment</h3><p>Higher rates pressured both long-duration growth assets and bonds. That helps explain why AGG lagged and why growth holdings became more volatile.</p></div></article>
+          <article class="timeline-item"><div class="timeline-date">2023–2025</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Diversification starts to matter</h3><p>Instead of depending only on one stock, the portfolio benefited from broad market exposure through SPY plus targeted growth exposure from QQQ and VUG.</p></div></article>
+          <article class="timeline-item"><div class="timeline-date">Mar 27, 2026</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Checkpoint value reaches $75,050.78</h3><p>By the progress report, the combined five-position portfolio was up $25,050.78, even with AGG still below cost.</p></div></article>
+        </div>
+      </section>
+
+      <section class="explorer-grid">
+        <a href="tesla.html" class="card page-link"><div><div class="event-label">Page 1</div><h3>Tesla</h3><p>Assigned stock page focused on the individual-company story and why Tesla behaved differently from the diversified funds.</p></div><div class="tag-row"><span class="tag">TSLA</span><span class="tag">Volatility</span></div></a>
+        <a href="spy.html" class="card page-link"><div><div class="event-label">Page 2</div><h3>SPY</h3><p>Broad market benchmark page showing why index exposure is the cleanest comparison point in the project.</p></div><div class="tag-row"><span class="tag">S&P 500</span><span class="tag">Benchmark</span></div></a>
+        <a href="qqq.html" class="card page-link"><div><div class="event-label">Page 3</div><h3>QQQ</h3><p>Growth-heavy ETF page showing the strongest ending value and the role of large-cap tech leadership.</p></div><div class="tag-row"><span class="tag">Growth</span><span class="tag">Best return</span></div></a>
+        <a href="vug.html" class="card page-link"><div><div class="event-label">Page 4</div><h3>VUG</h3><p>Second growth ETF page comparing diversified growth exposure with QQQ and Tesla.</p></div><div class="tag-row"><span class="tag">Growth ETF</span><span class="tag">Diversified</span></div></a>
+        <a href="agg.html" class="card page-link"><div><div class="event-label">Page 5</div><h3>AGG</h3><p>Bond ETF page showing why a fixed-income fund belongs in the project even when it trails the stock positions.</p></div><div class="tag-row"><span class="tag">Bonds</span><span class="tag">Stability</span></div></a>
+        <a href="musk-empire-explorer.html" class="card page-link"><div><div class="event-label">Bonus</div><h3>Musk Empire Explorer</h3><p>Interactive map and timeline exploring the Tesla, SpaceX, and xAI story — why Tesla was our assigned stock.</p></div><div class="tag-row"><span class="tag">Interactive</span><span class="tag">Research</span></div></a>
+      </section>
+
+      <p class="footer-note">elon.BAFN302unco · Progress-report values from March 27, 2026. Update final numbers on April 23, 2026 before submission.</p>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    const currentPage = location.pathname.split('/').pop() || 'index.html';
+    document.querySelectorAll('.nav-links a').forEach((a) => {
+      if (a.getAttribute('href') === currentPage) a.classList.add('active');
+    });
+  </script>
+  <script>window.stockData.renderPortfolioChart();</script>
+</body>
+</html>

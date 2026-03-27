@@ -1,0 +1,6 @@
+# Redirect /elon to the stock project landing page
+/elon  /elon.bafn302unco/home.html  302
+/elon/  /elon.bafn302unco/home.html  302
+
+# Redirect old stock project paths to new location
+/Stock_Project_BACS302/*  /elon.bafn302unco/:splat  301

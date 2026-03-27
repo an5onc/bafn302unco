@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Musk Empire — Tesla · SpaceX · xAI Global Explorer</title>
+<meta name="description" content="Interactive world map and timeline exploring Tesla, SpaceX, and xAI — from founding to a combined $2T+ empire reshaping the future.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+
+<style>
+/* ===== DESIGN TOKENS ===== */
+:root {
+  --font-display: 'Archivo', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --text-xs: 0.7rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9rem;
+  --text-lg: 1.05rem;
+  --text-xl: 1.3rem;
+  --text-2xl: 1.6rem;
+  --text-3xl: 2.2rem;
+  --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem;
+  --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-xl: 16px;
+  --transition: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  --header-height: 60px;
+  --sidebar-width: 420px;
+  /* Tesla brand palette */
+  --tesla-red: #E31937;
+  --tesla-red-dim: #B8132C;
+  --tesla-red-glow: rgba(227, 25, 55, 0.3);
+  --spacex-blue: #1E90FF;
+  --spacex-blue-dim: #1670CC;
+  --spacex-blue-glow: rgba(30, 144, 255, 0.3);
+  --xai-purple: #A855F7;
+  --xai-purple-dim: #8B3FD4;
+  --xai-purple-glow: rgba(168, 85, 247, 0.3);
+}
+
+/* ===== DARK THEME ===== */
+[data-theme="dark"] {
+  --color-bg: #0A0A0A;
+  --color-surface: #111111;
+  --color-surface-2: #1A1A1A;
+  --color-surface-3: #222222;
+  --color-border: #2A2A2A;
+  --color-border-light: #333333;
+  --color-text: #F0F0EE;
+  --color-text-muted: #999996;
+  --color-text-faint: #555553;
+  --color-map-bg: #0D0D0D;
+  --color-map-land: #1A1A1A;
+  --color-map-stroke: #2A2A2A;
+  --color-map-water: #080810;
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+  --tooltip-bg: rgba(17,17,17,0.95);
+  --tooltip-border: rgba(255,255,255,0.08);
+}
+
+/* ===== LIGHT THEME ===== */
+[data-theme="light"] {
+  --color-bg: #FAFAFA;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F5F5F3;
+  --color-surface-3: #EEEEEC;
+  --color-border: #E0DDD8;
+  --color-border-light: #D0CDC8;
+  --color-text: #111111;
+  --color-text-muted: #666663;
+  --color-text-faint: #AAAAAA;
+  --color-map-bg: #F0F0EC;
+  --color-map-land: #E0DDD8;
+  --color-map-stroke: #CCC;
+  --color-map-water: #E8ECF0;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.14);
+  --tooltip-bg: rgba(255,255,255,0.96);
+  --tooltip-border: rgba(0,0,0,0.1);
+}
+
+/* ===== RESET ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+}
+button { cursor: pointer; background: none; border: none; font: inherit; color: inherit; }
+a { color: var(--tesla-red); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ===== APP LAYOUT ===== */
+.app {
+  display: grid;
+  grid-template-rows: var(--header-height) 1fr;
+  height: 100dvh;
+  overflow: hidden;
+}
+.main {
+  display: grid;
+  grid-template-columns: 1fr var(--sidebar-width);
+  overflow: hidden;
+}
+
+/* ===== HEADER ===== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-5);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  z-index: 20;
+  gap: var(--space-4);
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.logo-mark {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.logo-mark .bar {
+  width: 4px;
+  border-radius: 2px;
+}
+.logo-mark .bar:nth-child(1) { height: 28px; background: var(--tesla-red); }
+.logo-mark .bar:nth-child(2) { height: 20px; background: var(--spacex-blue); }
+.logo-mark .bar:nth-child(3) { height: 24px; background: var(--xai-purple); }
+.header-title h1 {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+.header-title h1 .accent { color: var(--tesla-red); }
+.header-subtitle {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+/* Company filter pills */
+.company-filters {
+  display: flex;
+  gap: var(--space-2);
+}
+.filter-pill {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-muted);
+  transition: all var(--transition);
+  font-family: var(--font-display);
+}
+.filter-pill:hover { border-color: var(--color-text-faint); color: var(--color-text); }
+.filter-pill.active[data-company="tesla"] {
+  border-color: var(--tesla-red); color: var(--tesla-red); background: var(--tesla-red-glow);
+}
+.filter-pill.active[data-company="spacex"] {
+  border-color: var(--spacex-blue); color: var(--spacex-blue); background: var(--spacex-blue-glow);
+}
+.filter-pill.active[data-company="xai"] {
+  border-color: var(--xai-purple); color: var(--xai-purple); background: var(--xai-purple-glow);
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  transition: all var(--transition);
+}
+.theme-toggle:hover { background: var(--color-surface-2); color: var(--color-text); }
+
+/* ===== MAP CONTAINER ===== */
+.map-container {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-map-bg);
+}
+#map { width: 100%; height: 100%; }
+#map svg { width: 100%; height: 100%; }
+
+/* Map legend */
+.map-legend {
+  position: absolute;
+  bottom: var(--space-5);
+  left: var(--space-5);
+  background: var(--tooltip-bg);
+  border: 1px solid var(--tooltip-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-md);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-dot.tesla { background: var(--tesla-red); box-shadow: 0 0 6px var(--tesla-red-glow); }
+.legend-dot.spacex { background: var(--spacex-blue); box-shadow: 0 0 6px var(--spacex-blue-glow); }
+.legend-dot.xai { background: var(--xai-purple); box-shadow: 0 0 6px var(--xai-purple-glow); }
+
+/* Valuation ticker */
+.valuation-bar {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-5);
+  display: flex;
+  gap: var(--space-3);
+  z-index: 5;
+}
+.val-card {
+  background: var(--tooltip-bg);
+  border: 1px solid var(--tooltip-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 120px;
+}
+.val-card .company-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.val-card .company-label.tesla { color: var(--tesla-red); }
+.val-card .company-label.spacex { color: var(--spacex-blue); }
+.val-card .company-label.xai { color: var(--xai-purple); }
+.val-card .val-amount {
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+.val-card .val-note {
+  font-size: 8px;
+  color: var(--color-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ===== TOOLTIP ===== */
+.tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: var(--tooltip-bg);
+  border: 1px solid var(--tooltip-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(16px);
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  max-width: 300px;
+  min-width: 220px;
+}
+.tooltip.visible { opacity: 1; }
+.tooltip-company {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 2px;
+}
+.tooltip-company.tesla { color: var(--tesla-red); }
+.tooltip-company.spacex { color: var(--spacex-blue); }
+.tooltip-company.xai { color: var(--xai-purple); }
+.tooltip-name {
+  font-weight: 700;
+  font-size: var(--text-base);
+  margin-bottom: var(--space-2);
+  line-height: 1.2;
+}
+.tooltip-type {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
+}
+.tooltip-products {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+.tooltip-status {
+  display: inline-block;
+  margin-top: var(--space-2);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.tooltip-status.operational { background: rgba(46,204,113,0.15); color: #2ecc71; }
+.tooltip-status.construction { background: rgba(241,196,15,0.15); color: #f1c40f; }
+.tooltip-status.planned { background: rgba(149,165,166,0.15); color: #95a5a6; }
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+  overflow: hidden;
+}
+.sidebar-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+.sidebar-tab {
+  flex: 1;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition);
+}
+.sidebar-tab:hover { color: var(--color-text); }
+.sidebar-tab.active { color: var(--tesla-red); border-bottom-color: var(--tesla-red); }
+
+.sidebar-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+.tab-panel {
+  display: none;
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.tab-panel.active { display: block; }
+
+/* ===== TIMELINE ===== */
+.timeline-controls {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--color-surface);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.year-range-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  font-weight: 700;
+}
+.timeline-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+.timeline-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--tesla-red);
+  border: 2px solid var(--color-surface);
+  box-shadow: var(--shadow-sm), 0 0 8px var(--tesla-red-glow);
+  transition: transform var(--transition);
+}
+.timeline-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+.timeline-slider::-moz-range-thumb {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--tesla-red);
+  border: 2px solid var(--color-surface);
+}
+.year-display {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--tesla-red);
+  min-width: 4ch;
+  text-align: right;
+}
+
+/* Timeline entries */
+.timeline-list { padding: var(--space-4); }
+.timeline-year-group { margin-bottom: var(--space-6); }
+.timeline-year-header {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text-faint);
+  margin-bottom: var(--space-3);
+  letter-spacing: -0.02em;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-2);
+}
+.timeline-entry {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+  cursor: default;
+  transition: background var(--transition);
+  border-radius: var(--radius-sm);
+  padding-left: var(--space-2);
+  padding-right: var(--space-2);
+}
+.timeline-entry:last-child { border-bottom: none; }
+.timeline-entry:hover { background: var(--color-surface-2); }
+.timeline-dot-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 6px;
+  flex-shrink: 0;
+}
+.timeline-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.timeline-dot.tesla { background: var(--tesla-red); box-shadow: 0 0 6px var(--tesla-red-glow); }
+.timeline-dot.spacex { background: var(--spacex-blue); box-shadow: 0 0 6px var(--spacex-blue-glow); }
+.timeline-dot.xai { background: var(--xai-purple); box-shadow: 0 0 6px var(--xai-purple-glow); }
+.timeline-line {
+  width: 1px;
+  flex: 1;
+  background: var(--color-border);
+  margin-top: 4px;
+}
+.timeline-body { flex: 1; min-width: 0; }
+.timeline-month {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 1px;
+}
+.timeline-event-title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+.timeline-desc {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* ===== FACILITIES LIST ===== */
+.facilities-list { padding: var(--space-4); }
+.facility-group-title {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: var(--space-2) 0;
+  margin-top: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+.facility-group-title:first-child { margin-top: 0; }
+.facility-group-title.tesla { color: var(--tesla-red); }
+.facility-group-title.spacex { color: var(--spacex-blue); }
+.facility-group-title.xai { color: var(--xai-purple); }
+.facility-card {
+  padding: var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: background var(--transition);
+  border-radius: var(--radius-sm);
+}
+.facility-card:hover { background: var(--color-surface-2); }
+.facility-card.selected { background: var(--color-surface-3); }
+.facility-name {
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+.facility-location {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.facility-meta {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+  font-size: 10px;
+  color: var(--color-text-faint);
+}
+
+/* ===== FUTURE OUTLOOK TAB ===== */
+.outlook-panel { padding: var(--space-5); }
+.outlook-section {
+  margin-bottom: var(--space-6);
+}
+.outlook-title {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid var(--color-border);
+}
+.outlook-title.tesla { border-bottom-color: var(--tesla-red); }
+.outlook-title.spacex { border-bottom-color: var(--spacex-blue); }
+.outlook-title.xai { border-bottom-color: var(--xai-purple); }
+.outlook-title.convergence { border-bottom-color: var(--color-text-faint); }
+.outlook-item {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.outlook-item:last-child { border-bottom: none; }
+.outlook-item-title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.outlook-item-desc {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+.convergence-card {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-top: var(--space-4);
+}
+.convergence-card h4 {
+  font-size: var(--text-base);
+  font-weight: 800;
+  margin-bottom: var(--space-3);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.convergence-card p {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin-bottom: var(--space-3);
+}
+.convergence-card p:last-child { margin-bottom: 0; }
+
+/* ===== MARKER PULSE ANIMATION ===== */
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+.marker-pulse {
+  animation: pulse-ring 2s ease-out infinite;
+  transform-origin: center;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 960px) {
+  :root { --sidebar-width: 100%; }
+  .main {
+    grid-template-columns: 1fr;
+    position: relative;
+  }
+  .sidebar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 50%;
+    border-left: none;
+    border-top: 1px solid var(--color-border);
+    transform: translateY(calc(100% - 44px));
+    transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 15;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    box-shadow: var(--shadow-lg);
+  }
+  .sidebar.open { transform: translateY(0); }
+  .sidebar-tabs { cursor: grab; }
+  .sidebar-tabs::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    background: var(--color-border-light);
+    border-radius: 2px;
+    margin: var(--space-2) auto;
+  }
+  .company-filters { display: none; }
+  .valuation-bar { flex-wrap: wrap; gap: var(--space-2); }
+  .val-card { min-width: 90px; padding: var(--space-1) var(--space-3); }
+  .val-card .val-amount { font-size: var(--text-base); }
+  .map-legend { bottom: calc(44px + var(--space-3)); }
+}
+@media (max-width: 600px) {
+  .header { padding: 0 var(--space-3); gap: var(--space-2); }
+  .header-title h1 { font-size: var(--text-sm); }
+  .header-subtitle { display: none; }
+  .valuation-bar { left: var(--space-3); top: var(--space-3); }
+}
+
+/* ===== SCROLLBAR ===== */
+.tab-panel::-webkit-scrollbar { width: 6px; }
+.tab-panel::-webkit-scrollbar-track { background: transparent; }
+.tab-panel::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+.tab-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-faint);
+}
+
+/* ===== FOCUS ===== */
+:focus-visible {
+  outline: 2px solid var(--tesla-red);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo-mark"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+      <div class="header-title">
+        <h1>The Musk <span class="accent">Empire</span></h1>
+        <span class="header-subtitle">Tesla &middot; SpaceX &middot; xAI</span>
+      </div>
+    </div>
+    <div class="company-filters">
+      <button class="filter-pill active" data-company="tesla">Tesla</button>
+      <button class="filter-pill active" data-company="spacex">SpaceX</button>
+      <button class="filter-pill active" data-company="xai">xAI</button>
+    </div>
+    <div class="header-controls">
+      <a href="home.html" style="padding:5px 14px;border-radius:20px;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;border:1.5px solid var(--color-border);color:var(--color-text-muted);transition:all 200ms;text-decoration:none;display:flex;align-items:center;gap:6px;" onmouseover="this.style.borderColor='var(--tesla-red)';this.style.color='var(--tesla-red)'" onmouseout="this.style.borderColor='var(--color-border)';this.style.color='var(--color-text-muted)'">&larr; Back to Project</a>
+      <button class="theme-toggle" data-theme-toggle aria-label="Switch theme">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+    <!-- MAP -->
+    <div class="map-container">
+      <div id="map"></div>
+
+      <!-- Valuation cards -->
+      <div class="valuation-bar">
+        <div class="val-card">
+          <span class="company-label tesla">Tesla</span>
+          <span class="val-amount">$1.4T</span>
+          <span class="val-note">Market Cap</span>
+        </div>
+        <div class="val-card">
+          <span class="company-label spacex">SpaceX</span>
+          <span class="val-amount">$1.25T</span>
+          <span class="val-note">Valuation</span>
+        </div>
+        <div class="val-card">
+          <span class="company-label xai">xAI</span>
+          <span class="val-amount">$250B</span>
+          <span class="val-note">Post-Acquisition</span>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot tesla"></div><span>Tesla Facilities</span></div>
+        <div class="legend-item"><div class="legend-dot spacex"></div><span>SpaceX Facilities</span></div>
+        <div class="legend-item"><div class="legend-dot xai"></div><span>xAI Data Centers</span></div>
+      </div>
+
+      <!-- Tooltip -->
+      <div id="tooltip" class="tooltip"></div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab active" data-tab="timeline">Timeline</button>
+        <button class="sidebar-tab" data-tab="facilities">Facilities</button>
+        <button class="sidebar-tab" data-tab="outlook">Future</button>
+      </div>
+      <div class="sidebar-content">
+        <!-- Timeline panel -->
+        <div id="timeline-panel" class="tab-panel active">
+          <div class="timeline-controls">
+            <span class="year-range-label">2002</span>
+            <input type="range" class="timeline-slider" id="year-slider" min="2002" max="2026" value="2026" step="1">
+            <span class="year-display" id="year-display">2026</span>
+          </div>
+          <div class="timeline-list" id="timeline-list"></div>
+        </div>
+        <!-- Facilities panel -->
+        <div id="facilities-panel" class="tab-panel">
+          <div class="facilities-list" id="facilities-list"></div>
+        </div>
+        <!-- Outlook panel -->
+        <div id="outlook-panel" class="tab-panel">
+          <div class="outlook-panel" id="outlook-content"></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(function() {
+"use strict";
+
+// ========== DATA ==========
+var facilities = [
+  // Tesla
+  { id:"t1", company:"tesla", name:"Fremont Factory", location:"Fremont, California, USA", type:"Vehicle Manufacturing", products:"Model S, 3, X, Y", lat:37.4927, lng:-121.9407, status:"Operational", year:2010, notes:"Tesla's original factory, formerly NUMMI plant" },
+  { id:"t2", company:"tesla", name:"Gigafactory Nevada", location:"Sparks, Nevada, USA", type:"Battery & Powertrain", products:"Batteries, motors, energy storage", lat:39.5384, lng:-119.4399, status:"Operational", year:2016, notes:"One of the world's largest battery plants" },
+  { id:"t3", company:"tesla", name:"Gigafactory Shanghai", location:"Shanghai, China", type:"Vehicle Manufacturing", products:"Model 3, Model Y", lat:30.8736, lng:121.7685, status:"Operational", year:2019, notes:"First Tesla factory outside the US" },
+  { id:"t4", company:"tesla", name:"Gigafactory Berlin", location:"Grunheide, Germany", type:"Vehicle Manufacturing", products:"Model Y, batteries", lat:52.3957, lng:13.7909, status:"Operational", year:2022, notes:"500K vehicles/year capacity" },
+  { id:"t5", company:"tesla", name:"Gigafactory Texas", location:"Austin, Texas, USA", type:"Vehicle Manufacturing", products:"Model Y, Cybertruck, energy storage", lat:30.2223, lng:-97.6171, status:"Operational", year:2022, notes:"Home of Cybertruck production & TERAFAB" },
+  { id:"t6", company:"tesla", name:"Gigafactory Mexico", location:"Monterrey, Mexico", type:"Vehicle Manufacturing (Planned)", products:"Next-gen vehicles", lat:25.6866, lng:-100.3161, status:"Under Construction", year:2025, notes:"Timeline uncertain, construction ongoing" },
+  // SpaceX
+  { id:"s1", company:"spacex", name:"SpaceX HQ & Factory", location:"Hawthorne, California, USA", type:"HQ & Manufacturing", products:"Falcon 9, Falcon Heavy, Dragon", lat:33.9199, lng:-118.3275, status:"Operational", year:2002, notes:"1 Rocket Road — main operations center" },
+  { id:"s2", company:"spacex", name:"McGregor Test Facility", location:"McGregor, Texas, USA", type:"Engine Testing & R&D", products:"Merlin & Raptor engine tests", lat:31.40, lng:-97.46, status:"Operational", year:2003, notes:"300-acre rocket engine test site" },
+  { id:"s3", company:"spacex", name:"Cape Canaveral SLC-40", location:"Cape Canaveral, Florida, USA", type:"Launch Complex", products:"Falcon 9 launches", lat:28.5621, lng:-80.5772, status:"Operational", year:2010, notes:"Primary east-coast launch pad" },
+  { id:"s4", company:"spacex", name:"Kennedy Space Center LC-39A", location:"Kennedy Space Center, Florida, USA", type:"Launch Complex", products:"Falcon Heavy, crewed Dragon", lat:28.5735, lng:-80.6511, status:"Operational", year:2014, notes:"Historic Apollo pad, leased by SpaceX" },
+  { id:"s5", company:"spacex", name:"Vandenberg SLC-4", location:"Vandenberg, California, USA", type:"Launch Complex", products:"Falcon 9, polar orbit missions", lat:34.6327, lng:-120.6134, status:"Operational", year:2013, notes:"West-coast launch facility" },
+  { id:"s6", company:"spacex", name:"Starbase Boca Chica", location:"Boca Chica, Texas, USA", type:"Spaceport & Manufacturing", products:"Starship development & launches", lat:25.9971, lng:-97.1554, status:"Operational", year:2018, notes:"Primary Starship development facility" },
+  // xAI
+  { id:"x1", company:"xai", name:"Colossus Supercomputer", location:"Memphis, Tennessee, USA", type:"AI Data Center", products:"Grok training, AI compute", lat:35.0487, lng:-90.1501, status:"Operational", year:2024, notes:"Targeting 1M GPUs & 2 gigawatts by 2026" },
+];
+
+var timeline = [
+  { year:2002, month:"May", company:"spacex", event:"SpaceX Founded", desc:"Elon Musk founds SpaceX with the vision of reducing space launch costs and enabling Mars colonization." },
+  { year:2003, month:"Jul", company:"tesla", event:"Tesla Motors Founded", desc:"Martin Eberhard and Marc Tarpenning found Tesla in San Carlos, California to prove EVs can be better than gasoline cars." },
+  { year:2004, month:"Feb", company:"tesla", event:"Musk Joins as Chairman", desc:"Elon Musk leads the $7.5M Series A, contributing $6.5M and becoming chairman of the board." },
+  { year:2006, month:"Mar", company:"spacex", event:"Falcon 1 First Launch", desc:"First Falcon 1 launch attempt fails due to fuel leak and fire. SpaceX learns fast." },
+  { year:2008, month:"Sep", company:"spacex", event:"Falcon 1 Reaches Orbit", desc:"SpaceX becomes the first private company to put a liquid-fueled rocket into Earth orbit." },
+  { year:2008, month:"Oct", company:"tesla", event:"Roadster Production Begins", desc:"The original Tesla Roadster enters production — the first highway-legal EV with lithium-ion batteries." },
+  { year:2008, month:"Nov", company:"tesla", event:"Musk Becomes CEO", desc:"Elon Musk takes over as CEO amid financial crisis, betting everything on Tesla's survival." },
+  { year:2010, month:"Jun", company:"tesla", event:"Tesla IPO — $226M Raised", desc:"Tesla goes public on NASDAQ at $17/share, raising $226M. First US automaker IPO since Ford in 1956." },
+  { year:2010, month:"Jun", company:"spacex", event:"Falcon 9 First Launch", desc:"The much larger Falcon 9 rocket successfully reaches orbit on its maiden flight." },
+  { year:2010, month:"Dec", company:"spacex", event:"Dragon Returns from Orbit", desc:"Dragon becomes the first commercial spacecraft to orbit Earth and return safely." },
+  { year:2012, month:"Jun", company:"tesla", event:"Model S Deliveries Begin", desc:"The Model S luxury sedan begins deliveries — a defining moment that proves EVs can be premium." },
+  { year:2012, month:"May", company:"spacex", event:"Dragon Docks with ISS", desc:"Dragon becomes the first commercial spacecraft to dock with the International Space Station." },
+  { year:2014, month:"Sep", company:"tesla", event:"Autopilot Introduced", desc:"Tesla introduces Autopilot driver-assistance system with forward-facing sensors and software." },
+  { year:2015, month:"Sep", company:"tesla", event:"Model X SUV Launches", desc:"The falcon-wing-door Model X crossover SUV begins deliveries." },
+  { year:2015, month:"Dec", company:"spacex", event:"First Booster Landing", desc:"Falcon 9 first stage lands vertically after orbital delivery — a historic reusability breakthrough." },
+  { year:2016, month:"Nov", company:"spacex", event:"Starlink Announced", desc:"SpaceX announces plans for a mega-constellation of satellites to provide global broadband internet." },
+  { year:2017, month:"Jul", company:"tesla", event:"Model 3 Production Begins", desc:"The affordable Model 3 enters production, becoming Tesla's breakthrough mass-market vehicle." },
+  { year:2018, month:"Feb", company:"spacex", event:"Falcon Heavy First Flight", desc:"The world's most powerful operational rocket launches with Musk's Tesla Roadster as payload." },
+  { year:2019, month:"Dec", company:"tesla", event:"Gigafactory Shanghai Opens", desc:"Tesla's first factory outside the US begins production — built in record time from empty field to cars." },
+  { year:2019, month:"May", company:"spacex", event:"First Starlink Satellites", desc:"SpaceX launches the first batch of 60 Starlink satellites, beginning the internet constellation." },
+  { year:2020, month:"Mar", company:"tesla", event:"Model Y Deliveries Begin", desc:"The Model Y crossover begins deliveries, quickly becoming Tesla's best-selling vehicle worldwide." },
+  { year:2020, month:"May", company:"spacex", event:"Crew Dragon First Crewed Flight", desc:"SpaceX launches NASA astronauts to the ISS — the first crewed orbital flight from US soil since 2011." },
+  { year:2021, month:"Oct", company:"tesla", event:"$1 Trillion Market Cap", desc:"Tesla becomes the 5th US company to reach $1T valuation — just 11 years after its IPO at $1.7B." },
+  { year:2022, month:"Mar", company:"tesla", event:"Giga Berlin Opens", desc:"Gigafactory Berlin-Brandenburg begins vehicle deliveries, Tesla's first European factory." },
+  { year:2022, month:"Apr", company:"tesla", event:"Giga Texas Opens", desc:"Gigafactory Texas opens in Austin with a massive Cyber Rodeo celebration for 15,000 guests." },
+  { year:2023, month:"Mar", company:"xai", event:"xAI Founded", desc:"Elon Musk founds xAI with 11 top AI researchers to build artificial general intelligence." },
+  { year:2023, month:"Apr", company:"spacex", event:"Starship Flight Test 1", desc:"The most powerful rocket ever built launches for the first time. Ends in explosion but gathers critical data." },
+  { year:2023, month:"Jul", company:"xai", event:"xAI Officially Announced", desc:"Musk publicly announces xAI with the mission to understand the true nature of the universe." },
+  { year:2023, month:"Nov", company:"xai", event:"Grok AI Chatbot Unveiled", desc:"xAI launches Grok, an AI assistant integrated with the X platform, known for its wit and real-time data." },
+  { year:2023, month:"Nov", company:"tesla", event:"Cybertruck Deliveries Begin", desc:"After years of anticipation, the stainless steel Cybertruck begins deliveries at Giga Texas." },
+  { year:2023, month:null, company:"tesla", event:"Model Y: World's Best-Selling Car", desc:"Model Y becomes the best-selling car globally — not just among EVs, but all vehicles." },
+  { year:2024, month:"Oct", company:"spacex", event:"Starship Booster Caught by Chopsticks", desc:"Flight Test 5 achieves the incredible — Super Heavy booster caught mid-air by the launch tower arms." },
+  { year:2024, month:"Sep", company:"xai", event:"Colossus Comes Online", desc:"100,000 GPU Colossus supercomputer begins operations in Memphis, built in just 122 days." },
+  { year:2024, month:"Dec", company:"xai", event:"$6B Series C at $50B Valuation", desc:"xAI raises $6B bringing total funding past $12B, signaling massive investor confidence." },
+  { year:2024, month:null, company:"spacex", event:"630+ Falcon Launches, 99.5% Success", desc:"Falcon 9 and Heavy reach 630 total launches with an extraordinary 99.5% success rate." },
+  { year:2025, month:"Feb", company:"xai", event:"Grok-3 Released", desc:"xAI releases Grok-3 with dramatically improved reasoning abilities, competing head-to-head with GPT-5." },
+  { year:2025, month:"Jun", company:"tesla", event:"Robotaxi Launches in Austin", desc:"Tesla launches its commercial autonomous taxi service to invited users in Austin, Texas." },
+  { year:2025, month:null, company:"spacex", event:"Starlink: 9.2M Subscribers, $10B+ Revenue", desc:"Starlink doubles subscribers in 15 months, generating over $10B annually. 9,633 active satellites in orbit." },
+  { year:2025, month:"Dec", company:"spacex", event:"SpaceX Valued at $800B", desc:"Secondary market offerings value SpaceX at $800B. IPO preparations begin with four banks selected." },
+  { year:2025, month:"Jan", company:"xai", event:"$20B Series E at $230B Valuation", desc:"xAI raises $20B (upsized from $15B target) reaching $230B valuation. 64M monthly active Grok users." },
+  { year:2026, month:"Feb", company:"spacex", event:"SpaceX Acquires xAI ($1.25T Combined)", desc:"SpaceX acquires xAI in an all-stock deal valuing SpaceX at $1T and xAI at $250B. AI meets space." },
+  { year:2026, month:"Mar", company:"spacex", event:"SpaceX Files for IPO", desc:"SpaceX files IPO prospectus targeting $75B raise at $1.75T valuation. 30% allocated to retail investors." },
+  { year:2026, month:"Mar", company:"tesla", event:"TERAFAB Chip Factory Announced", desc:"Tesla, SpaceX & xAI announce a $25B joint semiconductor fab in Austin for 2nm chips." },
+  { year:2026, month:"Apr", company:"tesla", event:"Cybercab Volume Production Begins", desc:"The dedicated autonomous Cybercab begins volume production, designed for robotaxi fleets." },
+  { year:2026, month:"Q1", company:"xai", event:"Grok-5 Launched (6T Parameters)", desc:"Grok-5 launches with ~6 trillion parameters in mixture-of-experts architecture. Competitive with frontier models." },
+  { year:2026, month:"Jan", company:"xai", event:"Colossus Expands to 2 Gigawatts", desc:"Third facility purchased in Memphis. Colossus targets 1 million GPUs across 2 gigawatts of power." },
+  { year:2026, month:"H2", company:"tesla", event:"Optimus Robot Mass Production", desc:"Humanoid robot Optimus begins mass production at Fremont — potentially Tesla's biggest product ever." },
+  { year:2026, month:"H2", company:"tesla", event:"Unsupervised FSD Nationwide", desc:"Tesla targets fully unsupervised Full Self-Driving rollout across the US and most countries by year end." },
+];
+
+// ========== STATE ==========
+var activeCompanies = { tesla: true, spacex: true, xai: true };
+var selectedYear = 2026;
+var selectedFacility = null;
+
+// ========== DOM REFS ==========
+var mapEl = document.getElementById("map");
+var tooltipEl = document.getElementById("tooltip");
+var timelineList = document.getElementById("timeline-list");
+var facilitiesList = document.getElementById("facilities-list");
+var outlookContent = document.getElementById("outlook-content");
+var yearSlider = document.getElementById("year-slider");
+var yearDisplay = document.getElementById("year-display");
+
+// ========== UTILITY ==========
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+function companyColor(c) {
+  if (c === "tesla") return cssVar("--tesla-red") || "#E31937";
+  if (c === "spacex") return cssVar("--spacex-blue") || "#1E90FF";
+  if (c === "xai") return cssVar("--xai-purple") || "#A855F7";
+  return "#888";
+}
+function companyGlow(c) {
+  if (c === "tesla") return "rgba(227,25,55,0.35)";
+  if (c === "spacex") return "rgba(30,144,255,0.35)";
+  if (c === "xai") return "rgba(168,85,247,0.35)";
+  return "rgba(136,136,136,0.2)";
+}
+
+// ========== MAP ==========
+var mapSvg, mapG, projection, pathGen, markersG;
+
+async function initMap() {
+  var rect = mapEl.getBoundingClientRect();
+  var w = rect.width || 900;
+  var h = rect.height || 550;
+
+  mapSvg = d3.select("#map")
+    .append("svg")
+    .attr("viewBox", "0 0 " + w + " " + h)
+    .attr("preserveAspectRatio", "xMidYMid meet");
+
+  var world = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(function(r) { return r.json(); });
+  var featureCollection = topojson.feature(world, world.objects.countries);
+
+  projection = d3.geoNaturalEarth1()
+    .fitSize([w - 20, h - 20], featureCollection)
+    .translate([w / 2, h / 2]);
+
+  pathGen = d3.geoPath(projection);
+
+  // Water background
+  mapSvg.append("rect")
+    .attr("width", w).attr("height", h)
+    .attr("fill", cssVar("--color-map-bg"))
+    .attr("class", "map-bg");
+
+  // Graticule
+  mapSvg.append("path")
+    .datum(d3.geoGraticule10())
+    .attr("d", pathGen)
+    .attr("fill", "none")
+    .attr("stroke", cssVar("--color-map-stroke"))
+    .attr("stroke-width", 0.3)
+    .attr("stroke-opacity", 0.3);
+
+  // Countries
+  mapG = mapSvg.append("g");
+  mapG.selectAll("path")
+    .data(featureCollection.features)
+    .join("path")
+    .attr("d", pathGen)
+    .attr("fill", cssVar("--color-map-land"))
+    .attr("stroke", cssVar("--color-map-stroke"))
+    .attr("stroke-width", 0.4);
+
+  // Markers group
+  markersG = mapSvg.append("g").attr("class", "markers");
+
+  // Zoom
+  var zoom = d3.zoom()
+    .scaleExtent([1, 12])
+    .on("zoom", function(ev) {
+      mapG.attr("transform", ev.transform);
+      markersG.attr("transform", ev.transform);
+      markersG.selectAll(".marker-outer")
+        .attr("r", function() { return 8 / ev.transform.k; });
+      markersG.selectAll(".marker-inner")
+        .attr("r", function() { return 4 / ev.transform.k; });
+      markersG.selectAll(".marker-pulse")
+        .attr("r", function() { return 8 / ev.transform.k; });
+      mapG.selectAll("path")
+        .attr("stroke-width", 0.4 / ev.transform.k);
+    });
+  mapSvg.call(zoom);
+
+  renderMarkers();
+}
+
+function renderMarkers() {
+  if (!markersG) return;
+  var visibleFacilities = facilities.filter(function(f) {
+    return activeCompanies[f.company] && f.lat != null;
+  });
+
+  var groups = markersG.selectAll(".marker-group")
+    .data(visibleFacilities, function(d) { return d.id; });
+
+  groups.exit().transition().duration(300).attr("opacity", 0).remove();
+
+  var enter = groups.enter()
+    .append("g")
+    .attr("class", "marker-group")
+    .attr("transform", function(d) {
+      var p = projection([d.lng, d.lat]);
+      return "translate(" + p[0] + "," + p[1] + ")";
+    })
+    .attr("opacity", 0)
+    .style("cursor", "pointer");
+
+  // Pulse ring
+  enter.append("circle")
+    .attr("class", "marker-pulse")
+    .attr("r", 8)
+    .attr("fill", "none")
+    .attr("stroke", function(d) { return companyColor(d.company); })
+    .attr("stroke-width", 1.5)
+    .attr("opacity", 0.5);
+
+  // Outer glow
+  enter.append("circle")
+    .attr("class", "marker-outer")
+    .attr("r", 8)
+    .attr("fill", function(d) { return companyGlow(d.company); });
+
+  // Inner dot
+  enter.append("circle")
+    .attr("class", "marker-inner")
+    .attr("r", 4)
+    .attr("fill", function(d) { return companyColor(d.company); });
+
+  enter.transition().duration(500).attr("opacity", 1);
+
+  // Events
+  enter.on("mouseover", function(ev, d) { showTooltip(ev, d); })
+    .on("mousemove", function(ev) { moveTooltip(ev); })
+    .on("mouseout", function() { hideTooltip(); })
+    .on("click", function(ev, d) {
+      selectFacility(d);
+      switchTab("facilities");
+    });
+}
+
+function showTooltip(ev, d) {
+  var statusClass = d.status === "Operational" ? "operational" : d.status.indexOf("Construction") !== -1 ? "construction" : "planned";
+  tooltipEl.innerHTML =
+    '<div class="tooltip-company ' + d.company + '">' + d.company.toUpperCase() + '</div>' +
+    '<div class="tooltip-name">' + d.name + '</div>' +
+    '<div class="tooltip-type">' + d.type + '</div>' +
+    '<div class="tooltip-products">' + d.products + '</div>' +
+    '<div class="tooltip-status ' + statusClass + '">' + d.status + '</div>';
+  tooltipEl.classList.add("visible");
+}
+function moveTooltip(ev) {
+  var x = ev.clientX + 16;
+  var y = ev.clientY - 16;
+  var tw = tooltipEl.offsetWidth;
+  var th = tooltipEl.offsetHeight;
+  if (x + tw > window.innerWidth) x = ev.clientX - tw - 16;
+  if (y + th > window.innerHeight) y = ev.clientY - th - 16;
+  tooltipEl.style.left = x + "px";
+  tooltipEl.style.top = y + "px";
+}
+function hideTooltip() {
+  tooltipEl.classList.remove("visible");
+}
+
+function selectFacility(f) {
+  selectedFacility = f ? f.id : null;
+  renderFacilities();
+  // Pan map to facility
+  if (f && f.lat && projection) {
+    var p = projection([f.lng, f.lat]);
+    // highlight marker briefly
+    markersG.selectAll(".marker-group").each(function(d) {
+      var el = d3.select(this);
+      if (d.id === f.id) {
+        el.select(".marker-inner").transition().duration(200).attr("r", 7).transition().duration(400).attr("r", 4);
+      }
+    });
+  }
+}
+
+// ========== TIMELINE ==========
+function renderTimeline() {
+  var filtered = timeline.filter(function(t) {
+    return t.year <= selectedYear && activeCompanies[t.company];
+  });
+
+  // Group by year descending
+  var years = {};
+  filtered.forEach(function(t) {
+    if (!years[t.year]) years[t.year] = [];
+    years[t.year].push(t);
+  });
+
+  var sortedYears = Object.keys(years).sort(function(a, b) { return b - a; });
+  var html = "";
+  sortedYears.forEach(function(yr) {
+    html += '<div class="timeline-year-group">';
+    html += '<div class="timeline-year-header">' + yr + '</div>';
+    years[yr].forEach(function(t, i) {
+      html += '<div class="timeline-entry">';
+      html += '<div class="timeline-dot-col"><div class="timeline-dot ' + t.company + '"></div>';
+      if (i < years[yr].length - 1) html += '<div class="timeline-line"></div>';
+      html += '</div>';
+      html += '<div class="timeline-body">';
+      if (t.month) html += '<div class="timeline-month">' + t.month + '</div>';
+      html += '<div class="timeline-event-title">' + t.event + '</div>';
+      html += '<div class="timeline-desc">' + t.desc + '</div>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+  });
+
+  if (!html) html = '<p style="padding:1rem;color:var(--color-text-faint);font-style:italic;">No events for selected filters.</p>';
+  timelineList.innerHTML = html;
+}
+
+// ========== FACILITIES LIST ==========
+function renderFacilities() {
+  var groups = [
+    { company: "tesla", label: "Tesla Facilities" },
+    { company: "spacex", label: "SpaceX Facilities" },
+    { company: "xai", label: "xAI Data Centers" }
+  ];
+  var html = "";
+  groups.forEach(function(g) {
+    if (!activeCompanies[g.company]) return;
+    var items = facilities.filter(function(f) { return f.company === g.company; });
+    if (items.length === 0) return;
+    html += '<div class="facility-group-title ' + g.company + '">' + g.label + '</div>';
+    items.forEach(function(f) {
+      var sel = selectedFacility === f.id ? " selected" : "";
+      html += '<div class="facility-card' + sel + '" data-id="' + f.id + '">';
+      html += '<div class="facility-name">' + f.name + '</div>';
+      html += '<div class="facility-location">' + f.location + '</div>';
+      html += '<div class="facility-meta"><span>' + f.type + '</span><span>' + f.status + '</span></div>';
+      html += '</div>';
+    });
+  });
+  facilitiesList.innerHTML = html;
+
+  facilitiesList.querySelectorAll(".facility-card").forEach(function(card) {
+    card.addEventListener("click", function() {
+      var id = card.dataset.id;
+      var fac = facilities.find(function(f) { return f.id === id; });
+      selectFacility(fac);
+    });
+  });
+}
+
+// ========== OUTLOOK ==========
+function renderOutlook() {
+  outlookContent.innerHTML =
+  '<div class="outlook-section">' +
+    '<div class="outlook-title tesla">Tesla — Road Ahead</div>' +
+    '<div class="outlook-item"><div class="outlook-item-title">Robotaxi Network Expansion</div><div class="outlook-item-desc">Expanding from Austin pilot to multiple US cities with dedicated Cybercab volume production ramping in H2 2026. This could create a multi-billion dollar recurring revenue stream.</div></div>' +
+    '<div class="outlook-item"><div class="outlook-item-title">Optimus Humanoid Robot</div><div class="outlook-item-desc">Mass production begins late 2026 at Fremont. Musk believes Optimus could eventually become Tesla\'s largest revenue product, with potential applications from factories to homes.</div></div>' +
+    '<div class="outlook-item"><div class="outlook-item-title">Unsupervised FSD Nationwide</div><div class="outlook-item-desc">8.3 billion supervised miles driven by early 2026. Tesla targets full unsupervised autonomy rollout across the US and most countries by end of 2026.</div></div>' +
+    '<div class="outlook-item"><div class="outlook-item-title">TERAFAB Semiconductor Fab</div><div class="outlook-item-desc">A $25B joint venture with SpaceX and xAI for 2nm chip manufacturing at Giga Texas. Custom AI4 inference chips for vehicles and Optimus, D3 chips for orbital AI satellites.</div></div>' +
+  '</div>' +
+
+  '<div class="outlook-section">' +
+    '<div class="outlook-title spacex">SpaceX — To the Stars</div>' +
+    '<div class="outlook-item"><div class="outlook-item-title">IPO in Mid-2026</div><div class="outlook-item-desc">Filed with SEC in March 2026. Targeting $75B raise at $1.75T valuation with 30% retail allocation. Would be among the largest IPOs in history.</div></div>' +
+    '<div class="outlook-item"><div class="outlook-item-title">Starship Block 3 Orbital</div><div class="outlook-item-desc">Flight Test 12 marks the debut of upgraded Block 3 vehicles. Full orbital capability is essential for NASA Artemis III lunar missions and eventual Mars transport.</div></div>' +
+    '<div class="outlook-item"><div class="outlook-item-title">Starlink Dominance</div><div class="outlook-item-desc">9.2 million subscribers, $10B+ annual revenue, 9,633 active satellites — about two-thirds of all active satellites in orbit. Subscriber growth continues at 100% YoY.</div></div>' +
+    '<div class="outlook-item"><div class="outlook-item-title">Mars Mission Architecture</div><div class="outlook-item-desc">Starship is designed as the primary transport for Mars cargo and crewed missions. Orbital refueling demonstrations are the next critical milestone.</div></div>' +
+  '</div>' +
+
+  '<div class="outlook-section">' +
+    '<div class="outlook-title xai">xAI — Intelligence at Scale</div>' +
+    '<div class="outlook-item"><div class="outlook-item-title">Grok-5: 6 Trillion Parameters</div><div class="outlook-item-desc">Launched Q1 2026 using mixture-of-experts architecture. Roughly double the parameter count of previous versions, competing directly with frontier AI models.</div></div>' +
+    '<div class="outlook-item"><div class="outlook-item-title">Colossus: 1 Million GPUs</div><div class="outlook-item-desc">Three buildings in Memphis expanding to 2 gigawatts total. On track for 1 million GPU capacity, making it the world\'s largest AI training cluster.</div></div>' +
+    '<div class="outlook-item"><div class="outlook-item-title">SpaceX Integration</div><div class="outlook-item-desc">Now a subsidiary of SpaceX after the February 2026 acquisition. AI capabilities being integrated into autonomous rocket systems and orbital AI satellites.</div></div>' +
+  '</div>' +
+
+  '<div class="outlook-section">' +
+    '<div class="outlook-title convergence">The Convergence</div>' +
+    '<div class="convergence-card">' +
+      '<h4>Three Companies, One Vision</h4>' +
+      '<p>The SpaceX acquisition of xAI and the TERAFAB joint venture represent a new chapter. Tesla builds the vehicles and robots. SpaceX builds the rockets and satellite networks. xAI builds the intelligence that powers it all.</p>' +
+      '<p>Custom chips from TERAFAB will power Tesla\'s autonomous vehicles and Optimus robots on the ground, while D3 chips enable edge AI computing on SpaceX\'s orbital satellites. Grok provides the language intelligence layer across all platforms.</p>' +
+      '<p>Combined, the three entities represent over $2.5 trillion in value — built in just two decades from a small EV startup, a rocket company with three failed launches, and an AI lab founded in 2023. The next decade could see autonomous fleets, humanoid robots in every factory, satellite-powered AI available globally, and humans walking on Mars.</p>' +
+    '</div>' +
+  '</div>';
+}
+
+// ========== TABS ==========
+function switchTab(tabName) {
+  document.querySelectorAll(".sidebar-tab").forEach(function(t) {
+    t.classList.toggle("active", t.dataset.tab === tabName);
+  });
+  document.querySelectorAll(".tab-panel").forEach(function(p) { p.classList.remove("active"); });
+  document.getElementById(tabName + "-panel").classList.add("active");
+
+  // Mobile: open sidebar
+  if (window.innerWidth <= 960) {
+    document.getElementById("sidebar").classList.add("open");
+  }
+}
+
+document.querySelectorAll(".sidebar-tab").forEach(function(tab) {
+  tab.addEventListener("click", function() { switchTab(tab.dataset.tab); });
+});
+
+// Mobile sidebar toggle
+var sidebarTabs = document.querySelector(".sidebar-tabs");
+sidebarTabs.addEventListener("click", function(e) {
+  if (window.innerWidth <= 960 && !e.target.classList.contains("sidebar-tab")) {
+    document.getElementById("sidebar").classList.toggle("open");
+  }
+});
+
+// ========== COMPANY FILTERS ==========
+document.querySelectorAll(".filter-pill").forEach(function(pill) {
+  pill.addEventListener("click", function() {
+    var c = pill.dataset.company;
+    pill.classList.toggle("active");
+    activeCompanies[c] = pill.classList.contains("active");
+    renderMarkers();
+    renderTimeline();
+    renderFacilities();
+  });
+});
+
+// ========== YEAR SLIDER ==========
+yearSlider.addEventListener("input", function() {
+  selectedYear = parseInt(yearSlider.value, 10);
+  yearDisplay.textContent = selectedYear;
+  renderTimeline();
+});
+
+// ========== THEME TOGGLE ==========
+(function() {
+  var toggle = document.querySelector("[data-theme-toggle]");
+  var root = document.documentElement;
+  var theme = root.getAttribute("data-theme") || "dark";
+
+  toggle.addEventListener("click", function() {
+    theme = theme === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", theme);
+    toggle.innerHTML = theme === "dark"
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+    // Refresh map colors
+    if (mapSvg) {
+      mapSvg.select(".map-bg").attr("fill", cssVar("--color-map-bg"));
+      mapG.selectAll("path")
+        .attr("fill", cssVar("--color-map-land"))
+        .attr("stroke", cssVar("--color-map-stroke"));
+    }
+  });
+})();
+
+// ========== INIT ==========
+async function init() {
+  try {
+    await initMap();
+    renderTimeline();
+    renderFacilities();
+    renderOutlook();
+  } catch(err) {
+    console.error("Init error:", err);
+    mapEl.innerHTML = '<p style="padding:2rem;color:#999">Failed to load map data. Please refresh.</p>';
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>
