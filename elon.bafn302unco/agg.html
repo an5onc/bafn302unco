@@ -17,16 +17,16 @@
         <div class="brand-subtitle">Five-Year Buy-and-Track Market Project</div>
       </div>
       <div class="nav-links">
-        <a href="home.html">Home</a>
-        <a href="index.html">Portfolio</a>
-        <a href="tesla.html">Tesla</a>
+        <a href="home.html">Group Home</a>
+        <a href="anson.html">Anson</a>
+        <a href="mikey.html">Mikey</a>
+        <a href="paige.html">Paige</a>
+        <a href="reflection.html">Reflection</a>
+        <span style="width:1px;height:20px;background:rgba(255,255,255,0.1);margin:0 4px;"></span>
         <a href="spy.html">SPY</a>
         <a href="qqq.html">QQQ</a>
         <a href="vug.html">VUG</a>
         <a href="agg.html">AGG</a>
-        <a href="ea.html">EA</a>
-        <a href="brkb.html">BRK.B</a>
-        <a href="musk-empire-explorer.html">Explorer</a>
       </div>
     </nav>
 
@@ -86,6 +86,16 @@
         </div>
       </section>
 
+      <section class="card chart-card" style="margin-bottom:28px;">
+        <div class="section-heading">
+          <h2>$10,000 Investment Value Over Time</h2>
+          <p>Approximate year-end value of the position from purchase through the April 8, 2026 checkpoint. The dotted line marks the $10,000 starting value.</p>
+        </div>
+        <div style="height:300px;position:relative;">
+          <canvas id="trackingChart" aria-label="AGG investment value over time"></canvas>
+        </div>
+      </section>
+
       <section class="card timeline-card">
         <div class="section-heading"><h2>AGG Timeline</h2><p>Report-style timeline showing how this holding fits into the broader five-year project story.</p></div>
         <div class="timeline"><article class="timeline-item"><div class="timeline-date">Jan 5, 2021</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Project Buy Date</h3><p>The AGG position starts with 84.80 shares purchased at $117.92.</p></div></article><article class="timeline-item"><div class="timeline-date">2021</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Income and stability role</h3><p>AGG entered the project as the core bond ETF, expected to behave differently than stocks.</p></div></article><article class="timeline-item"><div class="timeline-date">2022</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Rate shock</h3><p>Bond prices came under pressure as rates increased, which explains much of AGG's weakness.</p></div></article><article class="timeline-item"><div class="timeline-date">2023–2025</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Stabilization versus recovery</h3><p>AGG remained the least exciting holding, but it still provided a portfolio contrast against equity volatility.</p></div></article><article class="timeline-item"><div class="timeline-date">Apr 8, 2026</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Progress Report Checkpoint</h3><p>AGG closed at $99.05, leaving the position worth $8,399.44.</p></div></article></div>
@@ -109,6 +119,9 @@
       if (a.getAttribute('href') === currentPage) a.classList.add('active');
     });
   </script>
-  <script>window.stockData.renderMiniComparisonChart("AGG");</script>
+  <script>
+    window.stockData.renderMiniComparisonChart("AGG");
+    window.stockData.renderTrackingChart("trackingChart", "AGG");
+  </script>
 </body>
 </html>

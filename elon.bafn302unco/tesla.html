@@ -17,16 +17,17 @@
         <div class="brand-subtitle">Five-Year Buy-and-Track Market Project</div>
       </div>
       <div class="nav-links">
-        <a href="home.html">Home</a>
-        <a href="index.html">Portfolio</a>
+        <a href="home.html">Group Home</a>
+        <a href="anson.html">Anson</a>
+        <a href="mikey.html">Mikey</a>
+        <a href="paige.html">Paige</a>
+        <a href="reflection.html">Reflection</a>
+        <span style="width:1px;height:20px;background:rgba(255,255,255,0.1);margin:0 4px;"></span>
         <a href="tesla.html">Tesla</a>
         <a href="spy.html">SPY</a>
         <a href="qqq.html">QQQ</a>
         <a href="vug.html">VUG</a>
         <a href="agg.html">AGG</a>
-        <a href="ea.html">EA</a>
-        <a href="brkb.html">BRK.B</a>
-        <a href="musk-empire-explorer.html">Explorer</a>
       </div>
     </nav>
 
@@ -86,12 +87,45 @@
         </div>
       </section>
 
-      <section class="card timeline-card">
-        <div class="section-heading"><h2>Tesla (TSLA) Timeline</h2><p>Report-style timeline showing how this holding fits into the broader five-year project story.</p></div>
-        <div class="timeline"><article class="timeline-item"><div class="timeline-date">Jan 5, 2021</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Project Buy Date</h3><p>The Tesla position begins at $245.04 per share with 40.81 shares.</p></div></article><article class="timeline-item"><div class="timeline-date">2021</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Growth Stock Momentum</h3><p>Strong EV enthusiasm and investor excitement supported Tesla and other growth names.</p></div></article><article class="timeline-item"><div class="timeline-date">2022</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Rates and Volatility</h3><p>Higher rates hurt many long-duration growth stocks and increased valuation pressure.</p></div></article><article class="timeline-item"><div class="timeline-date">2023–2025</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Execution Watch</h3><p>Deliveries, margins, competition, and future technology expectations drove the narrative.</p></div></article><article class="timeline-item"><div class="timeline-date">Apr 8, 2026</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Progress Report Checkpoint</h3><p>Tesla closed at $343.25, bringing the position to $14,008.03.</p></div></article></div>
+      <section class="card chart-card" style="margin-bottom:28px;">
+        <div class="section-heading">
+          <h2>$10,000 Investment Value Over Time</h2>
+          <p>Approximate year-end value of the position from purchase through the April 8, 2026 checkpoint. The dotted line marks the $10,000 starting value.</p>
+        </div>
+        <div style="height:300px;position:relative;">
+          <canvas id="trackingChart" aria-label="TSLA investment value over time"></canvas>
+        </div>
       </section>
 
-      <section class="three-col-section"><article class="card event-card"><div class="event-label">Event 1</div><h3>2021 EV enthusiasm</h3><p>Tesla benefited from early-period momentum when investors strongly favored electric-vehicle and growth names.</p></article><article class="card event-card"><div class="event-label">Event 2</div><h3>2022 rate-hike pressure</h3><p>Tesla showed how sensitive high-growth companies can be to macroeconomic changes and valuation compression.</p></article><article class="card event-card"><div class="event-label">Event 3</div><h3>2024–2026 execution focus</h3><p>Investor attention centered on deliveries, pricing, competition, and future technology plans.</p></article></section>
+      <section class="card timeline-card">
+        <div class="section-heading"><h2>Tesla (TSLA) Timeline</h2><p>Key dated events and price context showing how Tesla traded through the five-year holding period.</p></div>
+        <div class="timeline">
+          <article class="timeline-item"><div class="timeline-date">Jan 5, 2021</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Project Buy Date — $245.04</h3><p>The Tesla position begins with 40.81 shares at $245.04. Tesla had already split 5-for-1 in August 2020, and the stock entered 2021 with strong momentum coming off a massive 2020 rally.</p></div></article>
+          <article class="timeline-item"><div class="timeline-date">Nov 4, 2021</div><div class="timeline-dot"></div><div class="timeline-content"><h3>All-Time High — ~$414</h3><p>TSLA reached its split-adjusted all-time high of approximately $414 in early November 2021. Investor enthusiasm for EVs, Tesla's inclusion in the S&P 500, and strong delivery growth all contributed. At this peak, the $10,000 position would have been worth roughly $16,900.</p></div></article>
+          <article class="timeline-item"><div class="timeline-date">Nov 6–8, 2021</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Musk Twitter Poll Triggers 25% Drop</h3><p>Elon Musk ran a Twitter poll asking followers whether he should sell 10% of his Tesla holdings. When the "Yes" vote won, Musk sold approximately $15 billion in Tesla stock over the next several weeks. TSLA fell more than 25% from its peak by mid-December 2021.</p></div></article>
+          <article class="timeline-item"><div class="timeline-date">Aug 2022</div><div class="timeline-dot"></div><div class="timeline-content"><h3>3-for-1 Stock Split + Full-Year Collapse</h3><p>Tesla executed a 3-for-1 stock split in August 2022. Despite the split, the stock had fallen more than 65% from its January 2022 price by year-end — from roughly $380 to under $125. The Fed raised rates by 425 basis points in 2022, compressing high-growth valuations, while Musk's $44 billion acquisition of Twitter in October raised additional concerns about his focus and finances.</p></div></article>
+          <article class="timeline-item"><div class="timeline-date">Jan 2, 2025</div><div class="timeline-dot"></div><div class="timeline-content"><h3>First Annual Delivery Decline in Company History</h3><p>Tesla reported Q4 2024 results, bringing full-year 2024 deliveries to approximately 1.79 million vehicles — the first year-over-year annual delivery decline in Tesla's history. Combined with Musk's visible role heading the Department of Government Efficiency (DOGE) under President Trump, the stock fell from near $480 at the start of 2025 to below $250 by late February 2025.</p></div></article>
+          <article class="timeline-item"><div class="timeline-date">Apr 8, 2026</div><div class="timeline-dot"></div><div class="timeline-content"><h3>Progress Report Checkpoint — $343.25</h3><p>Tesla closed at $343.25, bringing the position to $14,008.03. The stock recovered from its early-2025 lows, supported by renewed investor interest in Tesla's autonomous driving and robotaxi strategy.</p></div></article>
+        </div>
+      </section>
+
+      <section class="three-col-section">
+        <article class="card event-card">
+          <div class="event-label">Event 1 · Nov 6, 2021</div>
+          <h3>Musk Twitter Share Poll</h3>
+          <p>Elon Musk tweeted a poll asking if he should sell 10% of his Tesla stake to pay taxes. The poll received over 3.5 million votes and Musk honored the result, selling approximately $15 billion in shares over the following weeks. TSLA fell from its all-time high of ~$414 by more than 25% in just six weeks — a direct lesson in how a single executive decision can quickly reshape a stock's trajectory.</p>
+        </article>
+        <article class="card event-card">
+          <div class="event-label">Event 2 · 2022</div>
+          <h3>Fed Rate Hikes Crush TSLA by 65%</h3>
+          <p>The Federal Reserve raised the federal funds rate from near zero to 4.25–4.50% over the course of 2022 — the sharpest rate-hike cycle in decades. Growth stocks with high valuations were hit hardest, and Tesla was no exception. TSLA fell from approximately $380 in January 2022 to below $125 by December 2022 — a 67% decline in a single calendar year. Musk's $44 billion Twitter acquisition in October 2022 added further concern about his financial priorities.</p>
+        </article>
+        <article class="card event-card">
+          <div class="event-label">Event 3 · Jan 2, 2025</div>
+          <h3>First Annual Delivery Decline</h3>
+          <p>For the first time in Tesla's history, full-year vehicle deliveries declined year-over-year in 2024. The miss sparked a sharp sell-off, with TSLA dropping from roughly $480 to below $250 by late February 2025. Musk's high-profile role in the Trump administration's DOGE initiative raised questions about how much time he was dedicating to Tesla. The stock gradually recovered through 2025, closing at $343.25 at the April 2026 project checkpoint.</p>
+        </article>
+      </section>
 
       <section class="two-col-section">
         <article class="card reflection-card"><div class="section-heading"><h2>Reflection Draft</h2></div><p>Tesla was useful in the project because it showed how a single stock can behave very differently from a diversified fund. It still delivered a gain, but it required much more confidence and patience than the ETFs.</p></article>
@@ -109,6 +143,9 @@
       if (a.getAttribute('href') === currentPage) a.classList.add('active');
     });
   </script>
-  <script>window.stockData.renderMiniComparisonChart("TSLA");</script>
+  <script>
+    window.stockData.renderMiniComparisonChart("TSLA");
+    window.stockData.renderTrackingChart("trackingChart", "TSLA");
+  </script>
 </body>
 </html>
