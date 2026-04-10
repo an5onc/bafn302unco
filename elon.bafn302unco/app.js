@@ -7,44 +7,61 @@ const investments = {
   TSLA: {
     name: 'Tesla', symbol: 'TSLA', type: 'Individual Stock', colorClass: 'red',
     accent: 'rgba(232, 33, 39, 0.85)', accentSolid: '#e82127',
-    buyPrice: 245.04, shares: 40.81, currentPrice: 361.83,
-    endingValue: 14766.28, gain: 4766.28, totalReturn: 47.66, cagr: 7.75,
+    buyPrice: 245.04, shares: 40.81, currentPrice: 343.25,
+    endingValue: 14008.03, gain: 4008.03, totalReturn: 40.08, cagr: 6.63,
     summary: 'Tesla added the highest company-specific upside in the project, but it was also the most headline-driven and volatile position.'
   },
   SPY: {
     name: 'SPDR S&P 500 ETF Trust', symbol: 'SPY', type: 'S&P 500 Index Fund', colorClass: 'blue',
     accent: 'rgba(88, 160, 255, 0.85)', accentSolid: '#58a0ff',
-    buyPrice: 371.33, shares: 26.93, currentPrice: 634.09,
-    endingValue: 17076.04, gain: 7076.04, totalReturn: 70.76, cagr: 10.79,
+    buyPrice: 371.33, shares: 26.93, currentPrice: 674.96,
+    endingValue: 18176.67, gain: 8176.67, totalReturn: 81.77, cagr: 12.05,
     summary: 'SPY worked as the broad U.S. equity benchmark and showed strong long-run growth with less single-company drama than Tesla.'
   },
   QQQ: {
     name: 'Invesco QQQ Trust', symbol: 'QQQ', type: 'Growth ETF #1', colorClass: 'green',
     accent: 'rgba(32, 201, 151, 0.85)', accentSolid: '#20c997',
-    buyPrice: 311.86, shares: 32.07, currentPrice: 562.58,
-    endingValue: 18041.94, gain: 8041.94, totalReturn: 80.42, cagr: 11.96,
+    buyPrice: 311.86, shares: 32.07, currentPrice: 606.09,
+    endingValue: 19437.31, gain: 9437.31, totalReturn: 94.37, cagr: 13.48,
     summary: 'QQQ was the best performer on the worksheet, reflecting how strongly large-cap growth stocks rebounded over the full tracking period.'
   },
   VUG: {
     name: 'Vanguard Growth ETF', symbol: 'VUG', type: 'Growth ETF #2', colorClass: 'gold',
     accent: 'rgba(242, 185, 75, 0.85)', accentSolid: '#f2b94b',
-    buyPrice: 251.28, shares: 39.8, currentPrice: 422.37,
-    endingValue: 16810.33, gain: 6810.33, totalReturn: 68.10, cagr: 10.45,
+    buyPrice: 251.28, shares: 39.8, currentPrice: 459.52,
+    endingValue: 18288.90, gain: 8288.90, totalReturn: 82.89, cagr: 12.18,
     summary: 'VUG captured growth exposure similar to QQQ, but with a slightly lower ending value and a broader basket than a single stock like Tesla.'
   },
   AGG: {
     name: 'iShares Core U.S. Aggregate Bond ETF', symbol: 'AGG', type: 'Core Bond ETF', colorClass: 'silver',
     accent: 'rgba(198, 208, 229, 0.85)', accentSolid: '#c6d0e5',
-    buyPrice: 117.92, shares: 84.8, currentPrice: 98.54,
-    endingValue: 8356.19, gain: -1643.81, totalReturn: -16.44, cagr: -3.38,
-    summary: 'AGG served as the bond sleeve in the portfolio and was the only holding below the original $10,000 at the March 27, 2026 checkpoint.'
+    buyPrice: 117.92, shares: 84.8, currentPrice: 99.05,
+    endingValue: 8399.44, gain: -1600.56, totalReturn: -16.01, cagr: -3.27,
+    summary: 'AGG served as the bond sleeve in the portfolio and was the only holding below the original $10,000 at the April 8, 2026 checkpoint.'
+  },
+  // ── Additional research positions (not part of the core 5-position class portfolio) ──
+  // UPDATE: Replace currentPrice with the April 23, 2026 closing price before final submission.
+  // Verify buyPrice with Yahoo Finance historical data for Jan 5, 2021.
+  EA: {
+    name: 'Electronic Arts', symbol: 'EA', type: 'Individual Stock (Gaming)', colorClass: 'blue',
+    accent: 'rgba(88, 160, 255, 0.85)', accentSolid: '#58a0ff',
+    buyPrice: 141.32, shares: 70.76, currentPrice: 204.00,
+    endingValue: 14435.04, gain: 4435.04, totalReturn: 44.35, cagr: 7.24,
+    summary: 'EA is a major video game publisher (EA SPORTS FC, Madden, Battlefield, Apex Legends) that delivered steady growth with more volatility than index funds.'
+  },
+  BRKB: {
+    name: 'Berkshire Hathaway Class B', symbol: 'BRK.B', type: 'Diversified Conglomerate', colorClass: 'gold',
+    accent: 'rgba(242, 185, 75, 0.85)', accentSolid: '#f2b94b',
+    buyPrice: 227.47, shares: 43.96, currentPrice: 479.75,
+    endingValue: 21089.81, gain: 11089.81, totalReturn: 110.90, cagr: 15.26,
+    summary: 'Berkshire Hathaway more than doubled over the tracking period — one of the strongest returns in the project\'s universe, driven by disciplined capital allocation across insurance, railroads, energy, and equities.'
   }
 };
 
 const portfolio = {
   symbol: 'PORT', name: 'Combined Portfolio',
-  initialValue: 50000, endingValue: 75050.78,
-  gain: 25050.78, totalReturn: 50.10, cagr: 8.09,
+  initialValue: 50000, endingValue: 78310.35,
+  gain: 28310.35, totalReturn: 56.62, cagr: 8.91,
   best: 'QQQ', laggard: 'AGG'
 };
 
@@ -187,7 +204,7 @@ function renderMiniComparisonChart(symbol, canvasId = 'miniChart') {
   Chart.defaults.font.family = chartDefaults.font.family;
 
   const item = investments[symbol];
-  const labels = ['Jan 5, 2021', 'Mar 27, 2026'];
+  const labels = ['Jan 5, 2021', 'Apr 8, 2026'];
 
   new Chart(ctx, {
     type: 'line',
