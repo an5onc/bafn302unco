@@ -231,6 +231,6 @@ const TOOL_REGISTRY = [
     title: 'Stock Project — Spring 2026',
     description: 'Five-Year Buy-and-Track Market Project. $50K simulated portfolio across TSLA, SPY, QQQ, VUG, and AGG from Jan 2021 to Apr 2026.',
     category: 'Course Management',
-    path: '/elon.bafn302unco/home.html'
+    path: '/project-hailmary/home.html'
   }
 ];
