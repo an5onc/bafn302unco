@@ -43,15 +43,15 @@ const investments = {
   // ── Additional research positions (not part of the core 5-position class portfolio) ──
   // Verify buyPrice with Yahoo Finance historical data for Jan 5, 2021.
   EA: {
-    name: 'Electronic Arts', symbol: 'EA', type: 'Individual Stock (Gaming)', colorClass: 'blue',
-    accent: 'rgba(88, 160, 255, 0.85)', accentSolid: '#58a0ff',
+    name: 'Electronic Arts', symbol: 'EA', type: 'Individual Stock (Gaming)', colorClass: 'orange',
+    accent: 'rgba(249, 115, 22, 0.85)', accentSolid: '#f97316',
     buyPrice: 141.32, shares: 70.76, currentPrice: 202.45,
     endingValue: 14325.36, gain: 4325.36, totalReturn: 43.25, cagr: 7.01,
     summary: 'EA is a major video game publisher (EA SPORTS FC, Madden, Battlefield, Apex Legends) that delivered steady growth with more volatility than index funds.'
   },
   BRKB: {
-    name: 'Berkshire Hathaway Class B', symbol: 'BRK.B', type: 'Diversified Conglomerate', colorClass: 'gold',
-    accent: 'rgba(242, 185, 75, 0.85)', accentSolid: '#f2b94b',
+    name: 'Berkshire Hathaway Class B', symbol: 'BRK.B', type: 'Diversified Conglomerate', colorClass: 'purple',
+    accent: 'rgba(168, 85, 247, 0.85)', accentSolid: '#a855f7',
     buyPrice: 227.47, shares: 43.96, currentPrice: 472.81,
     endingValue: 20784.73, gain: 10784.73, totalReturn: 107.85, cagr: 14.78,
     summary: 'Berkshire Hathaway more than doubled over the tracking period — the strongest individual stock pick in the project, only narrowly trailing QQQ at the finish line. Driven by disciplined capital allocation across insurance, railroads, energy, and equities.'
@@ -320,7 +320,26 @@ function renderPortfolioChart(canvasId = 'portfolioChart', stocks = order, total
       plugins: {
         legend: {
           position: 'bottom',
-          labels: { color: colors.muted, padding: 20, font: { weight: '600', size: 12 } }
+          labels: {
+            color: colors.muted,
+            padding: 20,
+            font: { weight: '600', size: 12 },
+            generateLabels(chart) {
+              const dataset = chart.data.datasets[0];
+              return chart.data.labels.map((label, index) => {
+                const value = dataset.data[index];
+                const share = ((value / total) * 100).toFixed(1);
+                return {
+                  text: `${label} ${share}%`,
+                  fillStyle: dataset.backgroundColor[index],
+                  strokeStyle: dataset.backgroundColor[index],
+                  lineWidth: 0,
+                  hidden: !chart.getDataVisibility(index),
+                  index
+                };
+              });
+            }
+          }
         },
         tooltip: {
           backgroundColor: colors.tooltipBg,
