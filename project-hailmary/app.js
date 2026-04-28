@@ -146,11 +146,87 @@ const chartDefaults = {
   color: '#8a95b2',
 };
 
+const themeStorageKey = 'project-hailmary-theme';
+
+function getThemePreference() {
+  try {
+    return localStorage.getItem(themeStorageKey) || 'dark';
+  } catch {
+    return 'dark';
+  }
+}
+
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  try {
+    localStorage.setItem(themeStorageKey, theme);
+  } catch {
+    // localStorage may be unavailable when the page is opened from restricted contexts.
+  }
+}
+
+function cssVar(name, fallback) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
+
+function chartColors() {
+  return {
+    muted: cssVar('--chart-muted', '#8a95b2'),
+    faint: cssVar('--chart-faint', '#5a6580'),
+    grid: cssVar('--chart-grid', 'rgba(255,255,255,0.04)'),
+    baseline: cssVar('--chart-baseline', 'rgba(255,255,255,0.06)'),
+    lineMuted: cssVar('--chart-line-muted', 'rgba(255,255,255,0.2)'),
+    pointBorder: cssVar('--chart-point-border', '#0c1224'),
+    tooltipBg: cssVar('--tooltip-bg', 'rgba(12, 18, 36, 0.95)'),
+    tooltipBorder: cssVar('--tooltip-border', 'rgba(255,255,255,0.1)')
+  };
+}
+
+setTheme(getThemePreference());
+
+function initThemeToggle() {
+  const navLinks = document.querySelector('.nav-links');
+  if (document.querySelector('[data-theme-toggle]')) return;
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'theme-toggle';
+  button.dataset.themeToggle = 'true';
+
+  function syncLabel() {
+    const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+    button.textContent = theme === 'light' ? 'Dark Mode' : 'Light Mode';
+    button.setAttribute('aria-label', `Switch to ${theme === 'light' ? 'dark' : 'light'} mode`);
+  }
+
+  button.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    setTheme(current === 'light' ? 'dark' : 'light');
+    syncLabel();
+
+    if (typeof Chart !== 'undefined') {
+      window.location.reload();
+    }
+  });
+
+  syncLabel();
+  if (navLinks) {
+    navLinks.appendChild(button);
+  } else {
+    button.classList.add('floating');
+    document.body.appendChild(button);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initThemeToggle);
+
 function renderComparisonChart(canvasId = 'comparisonChart', stocks = order) {
   const ctx = document.getElementById(canvasId);
   if (!ctx || typeof Chart === 'undefined') return;
 
   Chart.defaults.font.family = chartDefaults.font.family;
+  const colors = chartColors();
 
   new Chart(ctx, {
     type: 'bar',
@@ -166,7 +242,7 @@ function renderComparisonChart(canvasId = 'comparisonChart', stocks = order) {
       }, {
         label: 'Starting Value ($)',
         data: stocks.map(() => 10000),
-        backgroundColor: 'rgba(255,255,255,0.06)',
+        backgroundColor: colors.baseline,
         borderRadius: 8,
         borderSkipped: false,
         maxBarThickness: 80
@@ -179,11 +255,11 @@ function renderComparisonChart(canvasId = 'comparisonChart', stocks = order) {
         legend: {
           display: true,
           position: 'top',
-          labels: { color: '#8a95b2', padding: 20, font: { weight: '600', size: 12 } }
+          labels: { color: colors.muted, padding: 20, font: { weight: '600', size: 12 } }
         },
         tooltip: {
-          backgroundColor: 'rgba(12, 18, 36, 0.95)',
-          borderColor: 'rgba(255,255,255,0.1)',
+          backgroundColor: colors.tooltipBg,
+          borderColor: colors.tooltipBorder,
           borderWidth: 1,
           cornerRadius: 10,
           titleFont: { weight: '700' },
@@ -201,17 +277,17 @@ function renderComparisonChart(canvasId = 'comparisonChart', stocks = order) {
       },
       scales: {
         x: {
-          ticks: { color: '#8a95b2', font: { weight: '700', size: 13, family: "'JetBrains Mono', monospace" } },
+          ticks: { color: colors.muted, font: { weight: '700', size: 13, family: "'JetBrains Mono', monospace" } },
           grid: { display: false }
         },
         y: {
           beginAtZero: true,
           ticks: {
-            color: '#5a6580',
+            color: colors.faint,
             callback: v => '$' + Number(v).toLocaleString(),
             font: { family: "'JetBrains Mono', monospace", size: 11 }
           },
-          grid: { color: 'rgba(255,255,255,0.04)' }
+          grid: { color: colors.grid }
         }
       }
     }
@@ -223,6 +299,7 @@ function renderPortfolioChart(canvasId = 'portfolioChart', stocks = order, total
   if (!ctx || typeof Chart === 'undefined') return;
 
   Chart.defaults.font.family = chartDefaults.font.family;
+  const colors = chartColors();
   const total = totalValue || stocks.reduce((sum, k) => sum + investments[k].endingValue, 0);
 
   new Chart(ctx, {
@@ -243,11 +320,11 @@ function renderPortfolioChart(canvasId = 'portfolioChart', stocks = order, total
       plugins: {
         legend: {
           position: 'bottom',
-          labels: { color: '#8a95b2', padding: 20, font: { weight: '600', size: 12 } }
+          labels: { color: colors.muted, padding: 20, font: { weight: '600', size: 12 } }
         },
         tooltip: {
-          backgroundColor: 'rgba(12, 18, 36, 0.95)',
-          borderColor: 'rgba(255,255,255,0.1)',
+          backgroundColor: colors.tooltipBg,
+          borderColor: colors.tooltipBorder,
           borderWidth: 1,
           cornerRadius: 10,
           callbacks: {
@@ -268,6 +345,7 @@ function renderGroupChart(canvasId = 'groupChart') {
   if (!ctx || typeof Chart === 'undefined') return;
 
   Chart.defaults.font.family = chartDefaults.font.family;
+  const colors = chartColors();
   const members = ['anson', 'mikey', 'paige'];
 
   new Chart(ctx, {
@@ -284,7 +362,7 @@ function renderGroupChart(canvasId = 'groupChart') {
       }, {
         label: 'Starting Value ($)',
         data: members.map(() => 50000),
-        backgroundColor: 'rgba(255,255,255,0.06)',
+        backgroundColor: colors.baseline,
         borderRadius: 10,
         borderSkipped: false,
         maxBarThickness: 100
@@ -297,11 +375,11 @@ function renderGroupChart(canvasId = 'groupChart') {
         legend: {
           display: true,
           position: 'top',
-          labels: { color: '#8a95b2', padding: 20, font: { weight: '600', size: 12 } }
+          labels: { color: colors.muted, padding: 20, font: { weight: '600', size: 12 } }
         },
         tooltip: {
-          backgroundColor: 'rgba(12, 18, 36, 0.95)',
-          borderColor: 'rgba(255,255,255,0.1)',
+          backgroundColor: colors.tooltipBg,
+          borderColor: colors.tooltipBorder,
           borderWidth: 1,
           cornerRadius: 10,
           callbacks: {
@@ -320,17 +398,17 @@ function renderGroupChart(canvasId = 'groupChart') {
       },
       scales: {
         x: {
-          ticks: { color: '#8a95b2', font: { weight: '700', size: 14, family: "'JetBrains Mono', monospace" } },
+          ticks: { color: colors.muted, font: { weight: '700', size: 14, family: "'JetBrains Mono', monospace" } },
           grid: { display: false }
         },
         y: {
           beginAtZero: true,
           ticks: {
-            color: '#5a6580',
+            color: colors.faint,
             callback: v => '$' + Number(v).toLocaleString(),
             font: { family: "'JetBrains Mono', monospace", size: 11 }
           },
-          grid: { color: 'rgba(255,255,255,0.04)' }
+          grid: { color: colors.grid }
         }
       }
     }
@@ -342,6 +420,7 @@ function renderTrackingChart(canvasId = 'trackingChart', symbol) {
   if (!ctx || typeof Chart === 'undefined') return;
 
   Chart.defaults.font.family = chartDefaults.font.family;
+  const colors = chartColors();
 
   const inv = investments[symbol];
   const data = trackingData[symbol];
@@ -361,7 +440,7 @@ function renderTrackingChart(canvasId = 'trackingChart', symbol) {
           backgroundColor: fillColor,
           borderWidth: 2.5,
           pointBackgroundColor: inv.accentSolid,
-          pointBorderColor: '#0c1224',
+          pointBorderColor: colors.pointBorder,
           pointBorderWidth: 2,
           pointRadius: 5,
           pointHoverRadius: 8,
@@ -371,7 +450,7 @@ function renderTrackingChart(canvasId = 'trackingChart', symbol) {
         {
           label: 'Initial Investment ($10,000)',
           data: data.labels.map(() => 10000),
-          borderColor: 'rgba(255,255,255,0.2)',
+          borderColor: colors.lineMuted,
           backgroundColor: 'transparent',
           borderWidth: 1.5,
           borderDash: [6, 4],
@@ -388,11 +467,11 @@ function renderTrackingChart(canvasId = 'trackingChart', symbol) {
         legend: {
           display: true,
           position: 'top',
-          labels: { color: '#8a95b2', padding: 20, font: { weight: '600', size: 12 } }
+          labels: { color: colors.muted, padding: 20, font: { weight: '600', size: 12 } }
         },
         tooltip: {
-          backgroundColor: 'rgba(12, 18, 36, 0.95)',
-          borderColor: 'rgba(255,255,255,0.1)',
+          backgroundColor: colors.tooltipBg,
+          borderColor: colors.tooltipBorder,
           borderWidth: 1,
           cornerRadius: 10,
           callbacks: {
@@ -408,16 +487,16 @@ function renderTrackingChart(canvasId = 'trackingChart', symbol) {
       },
       scales: {
         x: {
-          ticks: { color: '#8a95b2', font: { size: 11, family: "'JetBrains Mono', monospace" } },
+          ticks: { color: colors.muted, font: { size: 11, family: "'JetBrains Mono', monospace" } },
           grid: { display: false }
         },
         y: {
           ticks: {
-            color: '#5a6580',
+            color: colors.faint,
             callback: v => '$' + Number(v / 1000).toFixed(0) + 'k',
             font: { size: 11, family: "'JetBrains Mono', monospace" }
           },
-          grid: { color: 'rgba(255,255,255,0.04)' }
+          grid: { color: colors.grid }
         }
       }
     }
@@ -429,6 +508,7 @@ function renderMiniComparisonChart(symbol, canvasId = 'miniChart') {
   if (!ctx || typeof Chart === 'undefined') return;
 
   Chart.defaults.font.family = chartDefaults.font.family;
+  const colors = chartColors();
 
   const item = investments[symbol];
   const labels = ['Jan 5, 2021', 'Apr 27, 2026'];
@@ -449,7 +529,7 @@ function renderMiniComparisonChart(symbol, canvasId = 'miniChart') {
         pointRadius: 6,
         pointHoverRadius: 8,
         pointBackgroundColor: item.accentSolid,
-        pointBorderColor: '#0c1224',
+        pointBorderColor: colors.pointBorder,
         pointBorderWidth: 3,
         borderWidth: 3
       }]
@@ -460,8 +540,8 @@ function renderMiniComparisonChart(symbol, canvasId = 'miniChart') {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: 'rgba(12, 18, 36, 0.95)',
-          borderColor: 'rgba(255,255,255,0.1)',
+          backgroundColor: colors.tooltipBg,
+          borderColor: colors.tooltipBorder,
           borderWidth: 1,
           cornerRadius: 10,
           callbacks: {
@@ -471,16 +551,16 @@ function renderMiniComparisonChart(symbol, canvasId = 'miniChart') {
       },
       scales: {
         x: {
-          ticks: { color: '#8a95b2', font: { size: 11, family: "'JetBrains Mono', monospace" } },
+          ticks: { color: colors.muted, font: { size: 11, family: "'JetBrains Mono', monospace" } },
           grid: { display: false }
         },
         y: {
           ticks: {
-            color: '#5a6580',
+            color: colors.faint,
             callback: v => '$' + Number(v).toLocaleString(),
             font: { size: 11, family: "'JetBrains Mono', monospace" }
           },
-          grid: { color: 'rgba(255,255,255,0.04)' }
+          grid: { color: colors.grid }
         }
       }
     }
